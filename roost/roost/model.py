@@ -34,7 +34,8 @@ class Roost(BaseModelClass):
         cry_heads=3,
         cry_gate=[256],
         cry_msg=[256],
-        out_hidden=[1024, 512, 256, 128, 64],
+        out_hidden=[512, 256, 128, 64, 32],
+        use_mnf=False,
         **kwargs
     ):
         super().__init__(task=task, robust=robust, n_targets=n_targets, **kwargs)
@@ -67,8 +68,10 @@ class Roost(BaseModelClass):
         output_dim = 2 * n_targets if self.robust else n_targets
 
         # self.output_nn = nn.Linear(elem_fea_len, output_dim)
-        self.output_nn = ResidualNetwork(dims=[elem_fea_len, *out_hidden, output_dim])
-        # self.output_nn = SimpleNetwork(elem_fea_len, output_dim, out_hidden, nn.ReLU)
+        self.output_nn = ResidualNetwork(
+            dims=[elem_fea_len, *out_hidden, output_dim], use_mnf=use_mnf
+        )
+        # self.output_nn = SimpleNetwork([elem_fea_len, *out_hidden, output_dim], nn.ReLU)
 
     def forward(self, elem_weights, elem_fea, self_fea_idx, nbr_fea_idx, cry_elem_idx):
         """
@@ -80,9 +83,6 @@ class Roost(BaseModelClass):
 
         # apply neural network to map from learned features to target
         return self.output_nn(crys_fea)
-
-    def __repr__(self):
-        return self.__class__.__name__
 
 
 class DescriptorNetwork(nn.Module):
@@ -120,8 +120,8 @@ class DescriptorNetwork(nn.Module):
         # define a global pooling function for materials
         cry_pool_layers = [
             WeightedAttentionPooling(
-                gate_nn=SimpleNetwork(elem_fea_len, 1, cry_gate),
-                message_nn=SimpleNetwork(elem_fea_len, elem_fea_len, cry_msg),
+                gate_nn=SimpleNetwork([elem_fea_len, *cry_gate, 1]),
+                message_nn=SimpleNetwork([elem_fea_len, *cry_msg, elem_fea_len]),
             )
             for _ in range(cry_heads)
         ]
@@ -176,9 +176,6 @@ class DescriptorNetwork(nn.Module):
 
         return torch.mean(torch.stack(head_fea), dim=0)
 
-    def __repr__(self):
-        return self.__class__.__name__
-
 
 class MessageLayer(nn.Module):
     """
@@ -192,8 +189,8 @@ class MessageLayer(nn.Module):
         # Pooling and Output
         pool_layers = [
             WeightedAttentionPooling(
-                gate_nn=SimpleNetwork(2 * elem_fea_len, 1, elem_gate),
-                message_nn=SimpleNetwork(2 * elem_fea_len, elem_fea_len, elem_msg),
+                gate_nn=SimpleNetwork([2 * elem_fea_len, *elem_gate, 1]),
+                message_nn=SimpleNetwork([2 * elem_fea_len, *elem_msg, elem_fea_len]),
             )
             for _ in range(elem_heads)
         ]
@@ -212,7 +209,7 @@ class MessageLayer(nn.Module):
         Inputs
         ----------
         elem_weights: Variable(torch.Tensor) shape (N,)
-            The fractional weights of elems in their materials
+            The fractional weights of elements in their materials
         elem_in_fea: Variable(torch.Tensor) shape (N, elem_fea_len)
             Element hidden features before message passing
         self_fea_idx: torch.Tensor shape (M,)
@@ -231,7 +228,7 @@ class MessageLayer(nn.Module):
         elem_self_fea = elem_in_fea[self_fea_idx, :]
         fea = torch.cat([elem_self_fea, elem_nbr_fea], dim=1)
 
-        # sum selectivity over the neighbours to get elems
+        # sum selectivity over the neighbors to get elements
         head_fea = []
         for attnhead in self.pooling:
             head_fea.append(
@@ -244,6 +241,3 @@ class MessageLayer(nn.Module):
 
         return fea + elem_in_fea
         # return fea
-
-    def __repr__(self):
-        return self.__class__.__name__

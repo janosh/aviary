@@ -80,7 +80,7 @@ class CrystalGraphConvNet(BaseModelClass):
 
         # NOTE the original model used softpluses as activation functions
         self.output_nn = SimpleNetwork(
-            elem_fea_len, output_dim, out_hidden, nn.Softplus
+            [elem_fea_len, *out_hidden, output_dim], nn.Softplus
         )
 
     def forward(self, atom_fea, nbr_fea, self_fea_idx, nbr_fea_idx, crystal_atom_idx):

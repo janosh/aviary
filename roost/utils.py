@@ -79,18 +79,14 @@ def init_model(
 
         # # NOTE currently if you use a model as a feature extractor and then
         # # resume for a checkpoint of that model the material_nn unfreezes.
-        # # This is potentially not the behaviour a user might expect.
+        # # This is potentially not the behavior a user might expect.
         # for p in model.material_nn.parameters():
         #     p.requires_grad = False
 
-        if robust:
-            output_dim = 2 * n_targets
-        else:
-            output_dim = n_targets
+        output_dim = 2 * n_targets if robust else n_targets
+        dims = [model_params["elem_fea_len"], *model_params["out_hidden"], output_dim]
 
-        model.output_nn = ResidualNetwork(
-            dims=[model_params["elem_fea_len"], *model_params["out_hidden"], output_dim]
-        )
+        model.output_nn = ResidualNetwork(dims, use_mnf=model_params["use_mnf"])
 
     elif resume:
         # TODO work out how to ensure that we are using the same optimizer
@@ -136,10 +132,7 @@ def init_model(
     # Select Task and Loss Function
     if task == "classification":
         normalizer = None
-        if robust:
-            criterion = NLLLoss()
-        else:
-            criterion = CrossEntropyLoss()
+        criterion = NLLLoss() if robust else CrossEntropyLoss()
 
     elif task == "regression":
         normalizer = Normalizer()

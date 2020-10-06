@@ -17,13 +17,11 @@ fea_path = ROOT + "/data/embeddings/matscholar-embedding.json"
 task = "regression"
 loss = "L1"
 robust = False
-model_name = "roost"
 elem_fea_len = 64
 n_graph = 3
 ensemble = 1
 run_id = 1
 data_seed = 0
-epochs = 10
 log = True
 sample = 1
 test_size = 0.2
@@ -43,10 +41,12 @@ print(f"Now running on {device}")
 
 parser = ArgumentParser(allow_abbrev=False)
 parser.add_argument("-use_mnf", action="store_true")  # False by default
-parser.add_argument("-model_name", type=str, default="mnf_roost")  # False by default
+parser.add_argument("-model_name", type=str, default="mnf_roost")
+parser.add_argument("-epochs", type=int, default=100)
 flags, _ = parser.parse_known_args()
 
-use_mnf, model_name = [vars(flags).get(x) for x in ["use_mnf", "model_name"]]
+args = ["use_mnf", "model_name", "epochs"]
+use_mnf, model_name, epochs = [vars(flags).get(x) for x in args]
 
 
 # %%
@@ -86,6 +86,7 @@ setup_params = {
     "learning_rate": learning_rate,
     "weight_decay": weight_decay,
     "momentum": momentum,
+    "device": device,
 }
 
 restart_params = {
@@ -108,6 +109,7 @@ model_params = {
     "cry_gate": [256],
     "cry_msg": [256],
     "out_hidden": [1024, 512, 256, 128, 64],
+    "use_mnf": use_mnf,
 }
 
 os.makedirs(f"models/{model_name}", exist_ok=True)
@@ -149,4 +151,5 @@ results_regression(
     data_params=data_params,
     robust=robust,
     eval_type="checkpoint",
+    device=device,
 )

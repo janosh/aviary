@@ -1,5 +1,8 @@
+from typing import List
+
 import torch
 from torch import nn
+from torch_mnf.layers import MNFLinear
 from torch_scatter import scatter_add, scatter_max, scatter_mean
 
 
@@ -17,9 +20,6 @@ class MeanPooling(nn.Module):
 
         return mean
 
-    def __repr__(self):
-        return self.__class__.__name__
-
 
 class SumPooling(nn.Module):
     """
@@ -34,9 +34,6 @@ class SumPooling(nn.Module):
         mean = scatter_add(x, index, dim=0)
 
         return mean
-
-    def __repr__(self):
-        return self.__class__.__name__
 
 
 class AttentionPooling(nn.Module):
@@ -65,9 +62,6 @@ class AttentionPooling(nn.Module):
         out = scatter_add(gate * x, index, dim=0)
 
         return out
-
-    def __repr__(self):
-        return self.__class__.__name__
 
 
 class WeightedAttentionPooling(nn.Module):
@@ -98,9 +92,6 @@ class WeightedAttentionPooling(nn.Module):
 
         return out
 
-    def __repr__(self):
-        return self.__class__.__name__
-
 
 class SimpleNetwork(nn.Module):
     """
@@ -108,24 +99,10 @@ class SimpleNetwork(nn.Module):
     """
 
     def __init__(
-        self,
-        input_dim,
-        output_dim,
-        hidden_layer_dims,
-        activation=nn.LeakyReLU,
-        batchnorm=False,
+        self, dims: List[int], activation=nn.LeakyReLU, batchnorm: bool = False
     ):
-        """
-        Inputs
-        ----------
-        input_dim: int
-        output_dim: int
-        hidden_layer_dims: list(int)
-
-        """
         super().__init__()
-
-        dims = [input_dim] + hidden_layer_dims
+        output_dim = dims.pop()
 
         self.fcs = nn.ModuleList(
             [nn.Linear(dims[i], dims[i + 1]) for i in range(len(dims) - 1)]
@@ -148,29 +125,23 @@ class SimpleNetwork(nn.Module):
 
         return self.fc_out(x)
 
-    def __repr__(self):
-        return self.__class__.__name__
-
 
 class ResidualNetwork(nn.Module):
     """
     Feed forward Residual Neural Network
     """
 
-    def __init__(self, dims, activation=nn.ReLU, batchnorm=False):
-        """
-        Inputs
-        ----------
-        input_dim: int
-        output_dim: int
-        hidden_layer_dims: list(int)
-        """
+    def __init__(
+        self, dims: List[int], activation=nn.ReLU, batchnorm: bool = True, use_mnf=False
+    ):
         super().__init__()
 
         output_dim = dims.pop()
 
+        fc = MNFLinear if use_mnf else nn.Linear
+
         self.fcs = nn.ModuleList(
-            [nn.Linear(dims[i], dims[i + 1]) for i in range(len(dims) - 1)]
+            [fc(dims[i], dims[i + 1]) for i in range(len(dims) - 1)]
         )
 
         bn_layers = [
@@ -179,13 +150,9 @@ class ResidualNetwork(nn.Module):
         ]
         self.bns = nn.ModuleList(bn_layers)
 
-        res_layers = [
-            nn.Linear(dims[i], dims[i + 1], bias=False)
-            if (dims[i] != dims[i + 1])
-            else nn.Identity()
-            for i in range(len(dims) - 1)
-        ]
-        self.res_fcs = nn.ModuleList(res_layers)
+        self.res_fcs = nn.ModuleList(
+            [nn.Linear(dims[i], dims[i + 1], bias=False) for i in range(len(dims) - 1)]
+        )
 
         self.acts = nn.ModuleList([activation() for _ in range(len(dims) - 1)])
 
@@ -196,6 +163,3 @@ class ResidualNetwork(nn.Module):
             x = act(bn(fc(x))) + res_fc(x)
 
         return self.fc_out(x)
-
-    def __repr__(self):
-        return self.__class__.__name__
