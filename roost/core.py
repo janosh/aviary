@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_squared_error as mse
@@ -449,7 +449,7 @@ def sampled_softmax(pre_logits, log_std, samples=10):
     # This choice may have an unknown effect on the calibration of the uncertainties
     sam_std = torch.exp(log_std).repeat_interleave(samples, dim=0)
     # TODO here we are normally distributing the samples even if the loss
-    # uses a different prior? 
+    # uses a different prior?
     epsilon = torch.randn_like(sam_std)
     pre_logits = pre_logits.repeat_interleave(samples, dim=0) + torch.mul(
         epsilon, sam_std

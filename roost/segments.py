@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 from torch_scatter import scatter_add, scatter_max, scatter_mean
 
 
@@ -23,7 +23,7 @@ class MeanPooling(nn.Module):
 
 class SumPooling(nn.Module):
     """
-    mean pooling
+    sum pooling
     """
 
     def __init__(self):
@@ -55,8 +55,6 @@ class AttentionPooling(nn.Module):
         self.message_nn = message_nn
 
     def forward(self, x, index):
-        """ forward pass """
-
         gate = self.gate_nn(x)
 
         gate = gate - scatter_max(gate, index, dim=0)[0][index]
@@ -89,14 +87,10 @@ class WeightedAttentionPooling(nn.Module):
         self.pow = torch.nn.Parameter(torch.randn((1)))
 
     def forward(self, x, index, weights):
-        """ forward pass """
-
         gate = self.gate_nn(x)
 
         gate = gate - scatter_max(gate, index, dim=0)[0][index]
         gate = (weights ** self.pow) * gate.exp()
-        # gate = weights * gate.exp()
-        # gate = gate.exp()
         gate = gate / (scatter_add(gate, index, dim=0)[index] + 1e-10)
 
         x = self.message_nn(x)
@@ -114,8 +108,12 @@ class SimpleNetwork(nn.Module):
     """
 
     def __init__(
-        self, input_dim, output_dim, hidden_layer_dims, activation=nn.LeakyReLU,
-        batchnorm=False
+        self,
+        input_dim,
+        output_dim,
+        hidden_layer_dims,
+        activation=nn.LeakyReLU,
+        batchnorm=False,
     ):
         """
         Inputs
@@ -134,11 +132,11 @@ class SimpleNetwork(nn.Module):
         )
 
         if batchnorm:
-            self.bns = nn.ModuleList([nn.BatchNorm1d(dims[i+1])
-                                    for i in range(len(dims)-1)])
+            self.bns = nn.ModuleList(
+                [nn.BatchNorm1d(dims[i + 1]) for i in range(len(dims) - 1)]
+            )
         else:
-            self.bns = nn.ModuleList([nn.Identity()
-                                    for i in range(len(dims)-1)])
+            self.bns = nn.ModuleList([nn.Identity() for i in range(len(dims) - 1)])
 
         self.acts = nn.ModuleList([activation() for _ in range(len(dims) - 1)])
 
@@ -159,46 +157,43 @@ class ResidualNetwork(nn.Module):
     Feed forward Residual Neural Network
     """
 
-    def __init__(self, input_dim, output_dim, hidden_layer_dims, activation=nn.ReLU, batchnorm=False):
+    def __init__(self, dims, activation=nn.ReLU, batchnorm=False):
         """
         Inputs
         ----------
         input_dim: int
         output_dim: int
         hidden_layer_dims: list(int)
-
         """
         super().__init__()
 
-        dims = [input_dim] + hidden_layer_dims
+        output_dim = dims.pop()
 
         self.fcs = nn.ModuleList(
             [nn.Linear(dims[i], dims[i + 1]) for i in range(len(dims) - 1)]
         )
 
-        if batchnorm:
-            self.bns = nn.ModuleList([nn.BatchNorm1d(dims[i+1])
-                                    for i in range(len(dims)-1)])
-        else:
-            self.bns = nn.ModuleList([nn.Identity()
-                                    for i in range(len(dims)-1)])
+        bn_layers = [
+            nn.BatchNorm1d(dims[i + 1]) if batchnorm else nn.Identity()
+            for i in range(len(dims) - 1)
+        ]
+        self.bns = nn.ModuleList(bn_layers)
 
-        self.res_fcs = nn.ModuleList(
-            [
-                nn.Linear(dims[i], dims[i + 1], bias=False)
-                if (dims[i] != dims[i + 1])
-                else nn.Identity()
-                for i in range(len(dims) - 1)
-            ]
-        )
+        res_layers = [
+            nn.Linear(dims[i], dims[i + 1], bias=False)
+            if (dims[i] != dims[i + 1])
+            else nn.Identity()
+            for i in range(len(dims) - 1)
+        ]
+        self.res_fcs = nn.ModuleList(res_layers)
+
         self.acts = nn.ModuleList([activation() for _ in range(len(dims) - 1)])
 
         self.fc_out = nn.Linear(dims[-1], output_dim)
 
     def forward(self, x):
-        for fc, bn, res_fc, act in zip(self.fcs, self.bns,
-                                       self.res_fcs, self.acts):
-            x = act(bn(fc(x)))+res_fc(x)
+        for fc, bn, res_fc, act in zip(self.fcs, self.bns, self.res_fcs, self.acts):
+            x = act(bn(fc(x))) + res_fc(x)
 
         return self.fc_out(x)
 

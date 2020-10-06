@@ -1,5 +1,5 @@
-import os
 from datetime import datetime
+from os.path import abspath, dirname, isfile
 
 import numpy as np
 import pandas as pd
@@ -18,6 +18,8 @@ from torch.utils.tensorboard import SummaryWriter
 from roost.core import Normalizer, RobustL1Loss, RobustL2Loss, sampled_softmax
 from roost.segments import ResidualNetwork
 
+ROOT = dirname(dirname(abspath(__file__)))
+
 
 def init_model(
     model_class,
@@ -29,7 +31,7 @@ def init_model(
     learning_rate,
     weight_decay,
     momentum,
-    device,
+    device=torch.device("cpu"),
     milestones=[],
     gamma=0.3,
     resume=None,
@@ -44,7 +46,7 @@ def init_model(
     if fine_tune is not None:
         print(f"Use material_nn and output_nn from '{fine_tune}' as a starting point")
         checkpoint = torch.load(fine_tune, map_location=device)
-        model = model_class(**checkpoint["model_params"], device=device,)
+        model = model_class(**checkpoint["model_params"], device=device)
         model.to(device)
         model.load_state_dict(checkpoint["state_dict"])
 
@@ -65,7 +67,7 @@ def init_model(
             "train the output_nn from scratch"
         )
         checkpoint = torch.load(transfer, map_location=device)
-        model = model_class(**checkpoint["model_params"], device=device,)
+        model = model_class(**checkpoint["model_params"], device=device)
         model.to(device)
         model.load_state_dict(checkpoint["state_dict"])
 
@@ -87,9 +89,7 @@ def init_model(
             output_dim = n_targets
 
         model.output_nn = ResidualNetwork(
-            input_dim=model_params["elem_fea_len"],
-            hidden_layer_dims=model_params["out_hidden"],
-            output_dim=output_dim,
+            dims=[model_params["elem_fea_len"], *model_params["out_hidden"], output_dim]
         )
 
     elif resume:
@@ -99,7 +99,7 @@ def init_model(
         print(f"Resuming training from '{resume}'")
         checkpoint = torch.load(resume, map_location=device)
 
-        model = model_class(**checkpoint["model_params"], device=device,)
+        model = model_class(**checkpoint["model_params"], device=device)
         model.to(device)
         model.load_state_dict(checkpoint["state_dict"])
         model.epoch = checkpoint["epoch"]
@@ -166,7 +166,7 @@ def init_model(
         scheduler.load_state_dict(checkpoint["scheduler"])
 
     num_param = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print("Total Number of Trainable Parameters: {}".format(num_param))
+    print(f"\nTotal Number of Trainable Parameters: {num_param:,}")
 
     # TODO parallelise the code over multiple GPUs. Currently DataParallel
     # crashes as subsets of the batch have different sizes due to the use of
@@ -279,7 +279,7 @@ def results_regression(
     test_set,
     data_params,
     robust,
-    device,
+    device=torch.device("cpu"),
     eval_type="checkpoint",
 ):
     """
@@ -307,14 +307,14 @@ def results_regression(
             resume = f"models/{model_name}/{eval_type}-r{j}.pth.tar"
             print("Evaluating Model {}/{}".format(j + 1, ensemble_folds))
 
-        assert os.path.isfile(resume), f"no checkpoint found at '{resume}'"
+        assert isfile(resume), f"no checkpoint found at '{resume}'"
         checkpoint = torch.load(resume, map_location=device)
         checkpoint["model_params"]["robust"]
         assert (
             checkpoint["model_params"]["robust"] == robust
         ), f"robustness of checkpoint '{resume}' is not {robust}"
 
-        model = model_class(**checkpoint["model_params"], device=device,)
+        model = model_class(**checkpoint["model_params"], device=device)
         model.to(device)
         model.load_state_dict(checkpoint["state_dict"])
 
@@ -322,7 +322,7 @@ def results_regression(
         normalizer.load_state_dict(checkpoint["normalizer"])
 
         with torch.no_grad():
-            idx, comp, y_test, output = model.predict(generator=test_generator,)
+            idx, comp, y_test, output = model.predict(generator=test_generator)
 
         if robust:
             mean, log_std = output.chunk(2, dim=1)
@@ -354,10 +354,10 @@ def results_regression(
         r2_std = np.std(r2)
 
         mae_avg = np.mean(mae)
-        mae_std = np.std(mae)/np.sqrt(mae.shape[0])
+        mae_std = np.std(mae) / np.sqrt(mae.shape[0])
 
         rmse_avg = np.mean(rmse)
-        rmse_std = np.std(rmse)/np.sqrt(rmse.shape[0])
+        rmse_std = np.std(rmse) / np.sqrt(rmse.shape[0])
 
         print("\nModel Performance Metrics:")
         print(f"R2 Score: {r2_avg:.4f} +/- {r2_std:.4f}")
@@ -440,13 +440,13 @@ def results_classification(
             resume = f"models/{model_name}/{eval_type}-r{j}.pth.tar"
             print("Evaluating Model {}/{}".format(j + 1, ensemble_folds))
 
-        assert os.path.isfile(resume), f"no checkpoint found at '{resume}'"
+        assert isfile(resume), f"no checkpoint found at '{resume}'"
         checkpoint = torch.load(resume, map_location=device)
         assert (
             checkpoint["model_params"]["robust"] == robust
         ), f"robustness of checkpoint '{resume}' is not {robust}"
 
-        model = model_class(**checkpoint["model_params"], device=device,)
+        model = model_class(**checkpoint["model_params"], device=device)
         model.to(device)
         model.load_state_dict(checkpoint["state_dict"])
 
@@ -485,19 +485,19 @@ def results_classification(
         print("Weighted F-score   : {:.4f}".format(fscore[0]))
     else:
         acc_avg = np.mean(acc)
-        acc_std = np.std(acc)/np.sqrt(acc.shape[0])
+        acc_std = np.std(acc) / np.sqrt(acc.shape[0])
 
         roc_auc_avg = np.mean(roc_auc)
-        roc_auc_std = np.std(roc_auc)/np.sqrt(roc_auc.shape[0])
+        roc_auc_std = np.std(roc_auc) / np.sqrt(roc_auc.shape[0])
 
         precision_avg = np.mean(precision)
-        precision_std = np.std(precision)/np.sqrt(precision.shape[0])
+        precision_std = np.std(precision) / np.sqrt(precision.shape[0])
 
         recall_avg = np.mean(recall)
-        recall_std = np.std(recall)/np.sqrt(recall.shape[0])
+        recall_std = np.std(recall) / np.sqrt(recall.shape[0])
 
         fscore_avg = np.mean(fscore)
-        fscore_std = np.std(fscore)/np.sqrt(fscore.shape[0])
+        fscore_std = np.std(fscore) / np.sqrt(fscore.shape[0])
 
         print("\nModel Performance Metrics:")
         print(f"Accuracy : {acc_avg:.4f} +/- {acc_std:.4f}")

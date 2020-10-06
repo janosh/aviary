@@ -1,7 +1,8 @@
 import torch
-import torch.nn as nn
+from torch import nn
+
 from roost.core import BaseModelClass
-from roost.segments import MeanPooling, SumPooling, SimpleNetwork
+from roost.segments import MeanPooling, SimpleNetwork, SumPooling
 
 
 class CrystalGraphConvNet(BaseModelClass):
@@ -123,20 +124,13 @@ class DescriptorNetwork(nn.Module):
     CrystalGraphConvNet Model.
     """
 
-    def __init__(
-        self, elem_emb_len, nbr_fea_len, elem_fea_len=64, n_graph=4,
-    ):
-        """
-        """
+    def __init__(self, elem_emb_len, nbr_fea_len, elem_fea_len=64, n_graph=4):
         super().__init__()
 
         self.embedding = nn.Linear(elem_emb_len, elem_fea_len)
 
         self.convs = nn.ModuleList(
-            [ConvLayer(
-                elem_fea_len=elem_fea_len,
-                nbr_fea_len=nbr_fea_len
-            ) for _ in range(n_graph)]
+            [ConvLayer(elem_fea_len, nbr_fea_len) for _ in range(n_graph)]
         )
 
         self.pooling = MeanPooling()

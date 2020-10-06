@@ -1,12 +1,11 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from roost.core import BaseModelClass
 from roost.segments import (
     ResidualNetwork,
     SimpleNetwork,
     WeightedAttentionPooling,
-    MeanPooling,
 )
 
 
@@ -60,19 +59,15 @@ class Roost(BaseModelClass):
                 "robust": robust,
                 "n_targets": n_targets,
                 "out_hidden": out_hidden,
+                **desc_dict,
             }
         )
 
-        self.model_params.update(desc_dict)
-
         # define an output neural network
-        if self.robust:
-            output_dim = 2 * n_targets
-        else:
-            output_dim = n_targets
+        output_dim = 2 * n_targets if self.robust else n_targets
 
         # self.output_nn = nn.Linear(elem_fea_len, output_dim)
-        self.output_nn = ResidualNetwork(elem_fea_len, output_dim, out_hidden)
+        self.output_nn = ResidualNetwork(dims=[elem_fea_len, *out_hidden, output_dim])
         # self.output_nn = SimpleNetwork(elem_fea_len, output_dim, out_hidden, nn.ReLU)
 
     def forward(self, elem_weights, elem_fea, self_fea_idx, nbr_fea_idx, cry_elem_idx):
@@ -108,8 +103,6 @@ class DescriptorNetwork(nn.Module):
         cry_gate=[256],
         cry_msg=[256],
     ):
-        """
-        """
         super().__init__()
 
         # apply linear transform to the input to get a trainable embedding
@@ -118,34 +111,21 @@ class DescriptorNetwork(nn.Module):
         # self.embedding = nn.Linear(elem_emb_len, elem_fea_len)
 
         # create a list of Message passing layers
-        self.graphs = nn.ModuleList(
-            [
-                MessageLayer(
-                    elem_fea_len=elem_fea_len,
-                    elem_heads=elem_heads,
-                    elem_gate=elem_gate,
-                    elem_msg=elem_msg,
-                )
-                for i in range(n_graph)
-            ]
-        )
+        graph_layers = [
+            MessageLayer(elem_fea_len, elem_heads, elem_gate, elem_msg)
+            for _ in range(n_graph)
+        ]
+        self.graphs = nn.ModuleList(graph_layers)
 
         # define a global pooling function for materials
-        self.cry_pool = nn.ModuleList(
-            [
-                WeightedAttentionPooling(
-                    gate_nn=SimpleNetwork(elem_fea_len, 1, cry_gate),
-                    message_nn=SimpleNetwork(elem_fea_len, elem_fea_len, cry_msg),
-                )
-                for _ in range(cry_heads)
-            ]
-        )
-
-        # self.cry_pool = nn.ModuleList(
-        #     [
-        #         MeanPooling()
-        #     ]
-        # )
+        cry_pool_layers = [
+            WeightedAttentionPooling(
+                gate_nn=SimpleNetwork(elem_fea_len, 1, cry_gate),
+                message_nn=SimpleNetwork(elem_fea_len, elem_fea_len, cry_msg),
+            )
+            for _ in range(cry_heads)
+        ]
+        self.cry_pool = nn.ModuleList(cry_pool_layers)
 
     def forward(self, elem_weights, elem_fea, self_fea_idx, nbr_fea_idx, cry_elem_idx):
         """
@@ -202,32 +182,22 @@ class DescriptorNetwork(nn.Module):
 
 class MessageLayer(nn.Module):
     """
-    Massage Layers are used to propagate information between nodes in
+    Message Layers are used to propagate information between nodes in
     the stoichiometry graph.
     """
 
     def __init__(self, elem_fea_len, elem_heads, elem_gate, elem_msg):
-        """
-        """
         super().__init__()
 
         # Pooling and Output
-        self.pooling = nn.ModuleList(
-            [
-                WeightedAttentionPooling(
-                    gate_nn=SimpleNetwork(2 * elem_fea_len, 1, elem_gate),
-                    message_nn=SimpleNetwork(2 * elem_fea_len, elem_fea_len, elem_msg),
-                )
-                for _ in range(elem_heads)
-            ]
-        )
-
-        # self.pooling = nn.ModuleList(
-        #     [
-        #         MeanPooling()
-        #     ]
-        # )
-        # self.mean_msg = SimpleNetwork(2*elem_fea_len, elem_fea_len, elem_msg)
+        pool_layers = [
+            WeightedAttentionPooling(
+                gate_nn=SimpleNetwork(2 * elem_fea_len, 1, elem_gate),
+                message_nn=SimpleNetwork(2 * elem_fea_len, elem_fea_len, elem_msg),
+            )
+            for _ in range(elem_heads)
+        ]
+        self.pooling = nn.ModuleList(pool_layers)
 
     def forward(self, elem_weights, elem_in_fea, self_fea_idx, nbr_fea_idx):
         """
