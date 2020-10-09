@@ -1,0 +1,8 @@
+tqdm
+pandas
+pymatgen
+torch_scatter
+torch
+numpy
+scipy
+scikit_learn
