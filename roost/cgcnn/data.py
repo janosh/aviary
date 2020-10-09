@@ -9,7 +9,7 @@ import torch
 from pymatgen.core.structure import Structure
 from torch.utils.data import Dataset
 
-from roost.core import LoadFeaturiser
+from roost.core import LoadFeaturizer
 
 
 class CrystalGraphData(Dataset):
@@ -57,21 +57,20 @@ class CrystalGraphData(Dataset):
         step=0.2,
         use_cache=True,
     ):
-        assert os.path.exists(data_path), "{} does not exist!".format(data_path)
+        assert os.path.exists(data_path), f"{data_path} does not exist!"
         # NOTE this naming structure might lead to clashes where the model
         # loads the wrong graph from the cache.
         self.use_cache = use_cache
         if self.use_cache:
             self.cachedir = os.path.join(os.path.dirname(data_path), "cache/")
-            if not os.path.isdir(self.cachedir):
-                os.makedirs(self.cachedir)
+            os.makedirs(self.cachedir, exist_ok=True)
 
         # NOTE make sure to use dense datasets, here do not use the default na
         # as they can clash with "NaN" which is a valid material
         self.df = pd.read_csv(data_path, keep_default_na=False, na_values=[])
 
-        assert os.path.exists(fea_path), "{} does not exist!".format(fea_path)
-        self.ari = LoadFeaturiser(fea_path)
+        assert os.path.exists(fea_path), f"{fea_path} does not exist!"
+        self.ari = LoadFeaturizer(fea_path)
         self.elem_fea_dim = self.ari.embedding_size
 
         self.max_num_nbr = max_num_nbr
@@ -194,7 +193,7 @@ class GaussianDistance(object):
 
     def expand(self, distances):
         """
-        Apply Gaussian disntance filter to a numpy distance array
+        Apply Gaussian distance filter to a numpy distance array
 
         Parameters
         ----------
@@ -208,9 +207,7 @@ class GaussianDistance(object):
             Expanded distance matrix with the last dimension of length
             len(self.filter)
         """
-        return np.exp(
-            -((distances[..., np.newaxis] - self.filter) ** 2) / self.var ** 2
-        )
+        return np.exp(-((distances[..., None] - self.filter) ** 2) / self.var ** 2)
 
 
 def collate_batch(dataset_list):
@@ -285,8 +282,6 @@ def collate_batch(dataset_list):
 
 
 def parse_cgcnn(cell, sites):
-    """
-    """
     cell = np.array(ast.literal_eval(cell), dtype=float)
     elems = []
     coords = []

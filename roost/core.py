@@ -1,14 +1,13 @@
 import gc
 import json
-import shutil
 from abc import ABC, abstractmethod
 
 import numpy as np
 import torch
-from torch import nn
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_squared_error as mse
+from torch import nn
 from torch.nn.functional import softmax
 from tqdm.autonotebook import trange
 
@@ -18,7 +17,9 @@ class BaseModelClass(nn.Module, ABC):
     A base class for models.
     """
 
-    def __init__(self, task, n_targets, robust, device, epoch=1, best_val_score=None):
+    def __init__(
+        self, task, n_targets, robust, device=None, epoch=1, best_val_score=None
+    ):
         super().__init__()
         self.task = task
         self.robust = robust
@@ -57,11 +58,11 @@ class BaseModelClass(nn.Module, ABC):
                 )
 
                 if verbose:
-                    print("Epoch: [{}/{}]".format(epoch, start_epoch + epochs - 1))
+                    print(f"Epoch: [{epoch}/{start_epoch + epochs - 1}]")
                     print(
                         f"Train      : Loss {t_loss:.4f}\t"
-                        + "".join(
-                            [f"{key} {val:.3f}\t" for key, val in t_metrics.items()]
+                        + "\t".join(
+                            [f"{key} {val:.3f}" for key, val in t_metrics.items()]
                         )
                     )
 
@@ -338,13 +339,12 @@ class ClassificationMetrics(object):
         return {"Acc": self.acc_meter.avg, "F1": self.fscore_meter.avg}
 
 
-class Normalizer(object):
-    """Normalize a Tensor and restore it later. """
+class Normalizer:
+    """Normalize a Tensor and restore it later."""
 
-    def __init__(self, log=False):
-        """tensor is taken as a sample to calculate the mean and std"""
-        self.mean = torch.tensor((0))
-        self.std = torch.tensor((1))
+    def __init__(self):
+        self.mean = None
+        self.std = None
 
     def fit(self, tensor, dim=0, keepdim=False):
         """tensor is taken as a sample to calculate the mean and std"""
@@ -352,9 +352,11 @@ class Normalizer(object):
         self.std = torch.std(tensor, dim, keepdim)
 
     def norm(self, tensor):
+        assert [self.mean, self.std] != [None, None], "Normalizer must be fit first"
         return (tensor - self.mean) / self.std
 
     def denorm(self, normed_tensor):
+        assert [self.mean, self.std] != [None, None], "Normalizer must be fit first"
         return normed_tensor * self.std + self.mean
 
     def state_dict(self):
@@ -365,7 +367,7 @@ class Normalizer(object):
         self.std = state_dict["std"].cpu()
 
 
-class Featuriser(object):
+class Featurizer(object):
     """
     Base class for featurising nodes and edges.
     """
@@ -390,9 +392,9 @@ class Featuriser(object):
         return len(self._embedding[list(self._embedding.keys())[0]])
 
 
-class LoadFeaturiser(Featuriser):
+class LoadFeaturizer(Featurizer):
     """
-    Initialize a featuriser from a JSON file.
+    Initialize a featurizer from a JSON file.
 
     Parameters
     ----------
@@ -414,11 +416,11 @@ def save_checkpoint(state, is_best, model_name, run_id):
     Saves a checkpoint and overwrites the best model when is_best = True
     """
     checkpoint = f"models/{model_name}/checkpoint-r{run_id}.pth.tar"
-    best = f"models/{model_name}/best-r{run_id}.pth.tar"
-
     torch.save(state, checkpoint)
+
     if is_best:
-        shutil.copyfile(checkpoint, best)
+        best = f"models/{model_name}/best-r{run_id}.pth.tar"
+        torch.save(state, best)
 
 
 def RobustL1Loss(output, log_std, target):

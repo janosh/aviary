@@ -152,7 +152,7 @@ class ResidualNetwork(nn.Module):
 
         self.res_fcs = nn.ModuleList(
             [nn.Linear(dims[i], dims[i + 1], bias=False) for i in range(len(dims) - 1)]
-        )
+        )  # no bias needed since fcs already has one, keeps param count down
 
         self.acts = nn.ModuleList([activation() for _ in range(len(dims) - 1)])
 

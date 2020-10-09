@@ -1,13 +1,13 @@
 import functools
-import os
 import re
+from os.path import exists
 
 import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
-from roost.core import LoadFeaturiser
+from roost.core import LoadFeaturizer
 
 
 class CompositionData(Dataset):
@@ -17,15 +17,13 @@ class CompositionData(Dataset):
     """
 
     def __init__(self, data_path, fea_path, task):
-        """
-        """
-        assert os.path.exists(data_path), "{} does not exist!".format(data_path)
+        assert exists(data_path), f"{data_path} does not exist!"
         # NOTE make sure to use dense datasets, here do not use the default na
         # as they can clash with "NaN" which is a valid material
         self.df = pd.read_csv(data_path, keep_default_na=False, na_values=[])
 
-        assert os.path.exists(fea_path), "{} does not exist!".format(fea_path)
-        self.elem_features = LoadFeaturiser(fea_path)
+        assert exists(fea_path), f"{fea_path} does not exist!"
+        self.elem_features = LoadFeaturizer(fea_path)
         self.elem_emb_len = self.elem_features.embedding_size
         self.task = task
         if self.task == "regression":
@@ -48,7 +46,6 @@ class CompositionData(Dataset):
     @functools.lru_cache(maxsize=None)  # Cache loaded structures
     def __getitem__(self, idx):
         """
-
         Returns
         -------
         atom_weights: torch.Tensor shape (M, 1)
@@ -193,9 +190,7 @@ def collate_batch(dataset_list):
 
 
 def format_composition(comp):
-    """ format str to ensure weights are explicate
-    example: BaCu3 -> Ba1Cu3
-    """
+    """format str to ensure weights are explicate, example: BaCu3 -> Ba1Cu3"""
     subst = r"\g<1>1.0"
     comp = re.sub(r"[\d.]+", lambda x: str(float(x.group())), comp.rstrip())
     comp = re.sub(r"([A-Z][a-z](?![0-9]))", subst, comp)
@@ -227,7 +222,7 @@ def parenthetic_contents(string):
 
 
 def splitout_weights(comp):
-    """ split composition string into elements (keys) and weights
+    """split composition string into elements (keys) and weights
     example: Ba1Cu3 -> [Ba,Cu] [1,3]
     """
     elements = []
@@ -244,7 +239,7 @@ def splitout_weights(comp):
 
 
 def update_weights(comp, weight):
-    """ split composition string into elements (keys) and weights
+    """split composition string into elements (keys) and weights
     example: Ba1Cu3 -> [Ba,Cu] [1,3]
     """
     regex3 = r"(\d+\.\d+)|(\d+)"
