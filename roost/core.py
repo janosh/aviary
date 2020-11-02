@@ -428,8 +428,8 @@ def RobustL1Loss(output, log_std, target):
     Robust L1 loss using a lorentzian prior. Allows for estimation
     of an aleatoric uncertainty.
     """
-    loss = np.sqrt(2.0) * torch.abs(output - target) * torch.exp(-log_std) + log_std
-    return torch.mean(loss)
+    loss = 2 ** 0.5 * torch.abs(output - target) * torch.exp(-log_std) + log_std
+    return loss.mean()
 
 
 def RobustL2Loss(output, log_std, target):

@@ -60,6 +60,7 @@ class Roost(BaseModelClass):
                 "robust": robust,
                 "n_targets": n_targets,
                 "out_hidden": out_hidden,
+                "use_mnf": use_mnf,
                 **desc_dict,
             }
         )

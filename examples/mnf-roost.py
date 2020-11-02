@@ -20,7 +20,6 @@ robust = False
 elem_fea_len = 64
 n_graph = 3
 ensemble = 1
-run_id = 1
 data_seed = 0
 log = True
 sample = 1
@@ -28,7 +27,6 @@ test_size = 0.2
 test_path = None
 val_size = 0.0
 val_path = None
-resume = None
 fine_tune = None
 transfer = None
 optim = "AdamW"
@@ -41,12 +39,14 @@ print(f"Now running on {device}")
 
 parser = ArgumentParser(allow_abbrev=False)
 parser.add_argument("-use_mnf", action="store_true")  # False by default
-parser.add_argument("-model_name", type=str, default="mnf_roost")
+parser.add_argument("-resume", action="store_true")
+parser.add_argument("-run_id", type=int, default=1)
+parser.add_argument("-model_name", type=str, default="roost")
 parser.add_argument("-epochs", type=int, default=100)
 flags, _ = parser.parse_known_args()
 
-args = ["use_mnf", "model_name", "epochs"]
-use_mnf, model_name, epochs = [vars(flags).get(x) for x in args]
+args = ["use_mnf", "resume", "run_id", "model_name", "epochs"]
+use_mnf, resume, run_id, model_name, epochs = [vars(flags).get(x) for x in args]
 
 
 # %%
@@ -112,10 +112,10 @@ model_params = {
     "use_mnf": use_mnf,
 }
 
-os.makedirs(f"models/{model_name}", exist_ok=True)
-os.makedirs("results", exist_ok=True)
+os.makedirs(f"{ROOT}/models/{model_name}", exist_ok=True)
+os.makedirs(f"{ROOT}/results", exist_ok=True)
 if log:
-    os.makedirs("runs", exist_ok=True)
+    os.makedirs(f"{ROOT}/runs", exist_ok=True)
 
 
 # %% Train a Roost model

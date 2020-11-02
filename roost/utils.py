@@ -50,16 +50,13 @@ def init_model(
         model.to(device)
         model.load_state_dict(checkpoint["state_dict"])
 
-        assert model.model_params["robust"] == robust, (
-            "cannot fine-tune "
-            "between tasks with different numbers of outputs - use transfer "
-            "option instead"
+        n_out_err = (
+            "cannot fine-tune between tasks with different numbers of outputs"
+            " - use transfer option instead"
         )
-        assert model.model_params["n_targets"] == n_targets, (
-            "cannot fine-tune "
-            "between tasks with different numbers of outputs - use transfer "
-            "option instead"
-        )
+
+        assert model.model_params["robust"] == robust, n_out_err
+        assert model.model_params["n_targets"] == n_targets, n_out_err
 
     elif transfer is not None:
         print(
