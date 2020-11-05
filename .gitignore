@@ -5,3 +5,4 @@ runs
 results
 dist
 *.log
+__pycache__

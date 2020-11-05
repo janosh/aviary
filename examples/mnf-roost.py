@@ -5,9 +5,10 @@ from argparse import ArgumentParser
 import torch
 from sklearn.model_selection import train_test_split as split
 
+from roost import ROOT
 from roost.roost.data import CompositionData, collate_batch
 from roost.roost.model import Roost
-from roost.utils import ROOT, results_regression, train_ensemble
+from roost.utils import results_regression, train_ensemble
 
 torch.manual_seed(0)  # ensure reproducible results
 
@@ -41,7 +42,7 @@ parser = ArgumentParser(allow_abbrev=False)
 parser.add_argument("-use_mnf", action="store_true")  # False by default
 parser.add_argument("-resume", action="store_true")
 parser.add_argument("-run_id", type=int, default=1)
-parser.add_argument("-model_name", type=str, default="roost")
+parser.add_argument("-model_name", type=str, default="mnf_roost")
 parser.add_argument("-epochs", type=int, default=100)
 flags, _ = parser.parse_known_args()
 

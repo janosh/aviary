@@ -1,5 +1,5 @@
 from datetime import datetime
-from os.path import abspath, dirname, isfile
+from os.path import isfile
 
 import numpy as np
 import pandas as pd
@@ -15,10 +15,9 @@ from torch.nn import CrossEntropyLoss, L1Loss, MSELoss, NLLLoss
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
+from roost import ROOT
 from roost.core import Normalizer, RobustL1Loss, RobustL2Loss, sampled_softmax
 from roost.segments import ResidualNetwork
-
-ROOT = dirname(dirname(abspath(__file__)))
 
 
 def init_model(
@@ -88,7 +87,7 @@ def init_model(
     elif resume:
         # TODO work out how to ensure that we are using the same optimizer
         # when resuming such that the state dictionaries do not clash.
-        resume = f"models/{model_name}/checkpoint-r{run_id}.pth.tar"
+        resume = f"{ROOT}/models/{model_name}/checkpoint-r{run_id}.pth.tar"
         print(f"Resuming training from '{resume}'")
         checkpoint = torch.load(resume, map_location=device)
 
@@ -291,10 +290,10 @@ def results_regression(
     for j in range(ensemble_folds):
 
         if ensemble_folds == 1:
-            resume = f"models/{model_name}/{eval_type}-r{run_id}.pth.tar"
+            resume = f"{ROOT}/models/{model_name}/{eval_type}-r{run_id}.pth.tar"
             print("Evaluating Model")
         else:
-            resume = f"models/{model_name}/{eval_type}-r{j}.pth.tar"
+            resume = f"{ROOT}/models/{model_name}/{eval_type}-r{j}.pth.tar"
             print(f"Evaluating Model {j + 1}/{ensemble_folds}")
 
         assert isfile(resume), f"no checkpoint found at '{resume}'"
@@ -379,11 +378,12 @@ def results_regression(
     if ensemble_folds == 1:
         df.to_csv(
             index=False,
-            path_or_buf=(f"results/test_results_{model_name}_r-{run_id}.csv"),
+            path_or_buf=(f"{ROOT}/results/test_results_{model_name}_r-{run_id}.csv"),
         )
     else:
         df.to_csv(
-            index=False, path_or_buf=(f"results/ensemble_results_{model_name}.csv")
+            index=False,
+            path_or_buf=(f"{ROOT}/results/ensemble_results_{model_name}.csv"),
         )
 
 
@@ -424,10 +424,10 @@ def results_classification(
     for j in range(ensemble_folds):
 
         if ensemble_folds == 1:
-            resume = f"models/{model_name}/{eval_type}-r{run_id}.pth.tar"
+            resume = f"{ROOT}/models/{model_name}/{eval_type}-r{run_id}.pth.tar"
             print("Evaluating Model")
         else:
-            resume = f"models/{model_name}/{eval_type}-r{j}.pth.tar"
+            resume = f"{ROOT}/models/{model_name}/{eval_type}-r{j}.pth.tar"
             print(f"Evaluating Model {j + 1}/{ensemble_folds}")
 
         assert isfile(resume), f"no checkpoint found at '{resume}'"
@@ -538,9 +538,10 @@ def results_classification(
     if ensemble_folds == 1:
         df.to_csv(
             index=False,
-            path_or_buf=(f"results/test_results_{model_name}_r-{run_id}.csv"),
+            path_or_buf=(f"{ROOT}/results/test_results_{model_name}_r-{run_id}.csv"),
         )
     else:
         df.to_csv(
-            index=False, path_or_buf=(f"results/ensemble_results_{model_name}.csv")
+            index=False,
+            path_or_buf=(f"{ROOT}/results/ensemble_results_{model_name}.csv"),
         )

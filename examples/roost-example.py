@@ -5,6 +5,7 @@ import sys
 import torch
 from sklearn.model_selection import train_test_split as split
 
+from roost import ROOT
 from roost.roost.data import CompositionData, collate_batch
 from roost.roost.model import Roost
 from roost.utils import (
@@ -162,7 +163,7 @@ def main(
         "out_hidden": [1024, 512, 256, 128, 64],
     }
 
-    os.makedirs(f"models/{model_name}/", exist_ok=True)
+    os.makedirs(f"{ROOT}/models/{model_name}/", exist_ok=True)
 
     if log:
         os.makedirs("runs/", exist_ok=True)

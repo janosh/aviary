@@ -1,16 +1,17 @@
+import argparse
 import os
 import sys
-import argparse
 
 import torch
 from sklearn.model_selection import train_test_split as split
 
-from roost.cgcnn.model import CrystalGraphConvNet
+from roost import ROOT
 from roost.cgcnn.data import CrystalGraphData, collate_batch
+from roost.cgcnn.model import CrystalGraphConvNet
 from roost.utils import (
-    train_ensemble,
     results_classification,
     results_regression,
+    train_ensemble,
 )
 
 
@@ -136,7 +137,9 @@ def main(
             else:
                 print(f"using {val_size} of training set as validation set")
                 train_idx, val_idx = split(
-                    train_idx, random_state=data_seed, test_size=val_size / (1 - test_size),
+                    train_idx,
+                    random_state=data_seed,
+                    test_size=val_size / (1 - test_size),
                 )
                 val_set = torch.utils.data.Subset(dataset, val_idx)
 
@@ -177,7 +180,7 @@ def main(
         "n_hidden": n_hidden,
     }
 
-    os.makedirs(f"models/{model_name}/", exist_ok=True)
+    os.makedirs(f"{ROOT}/models/{model_name}/", exist_ok=True)
 
     if log:
         os.makedirs("runs/", exist_ok=True)
@@ -264,10 +267,7 @@ def input_parser():
     )
     test_group = parser.add_mutually_exclusive_group()
     test_group.add_argument(
-        "--test-path",
-        type=str,
-        metavar="PATH",
-        help="Path to independent test set"
+        "--test-path", type=str, metavar="PATH", help="Path to independent test set"
     )
     test_group.add_argument(
         "--test-size",
@@ -431,10 +431,7 @@ def input_parser():
     # restart inputs
     use_group = parser.add_mutually_exclusive_group()
     use_group.add_argument(
-        "--fine-tune",
-        type=str,
-        metavar="PATH",
-        help="Checkpoint path for fine tuning"
+        "--fine-tune", type=str, metavar="PATH", help="Checkpoint path for fine tuning"
     )
     use_group.add_argument(
         "--transfer",
@@ -443,44 +440,28 @@ def input_parser():
         help="Checkpoint path for transfer learning",
     )
     use_group.add_argument(
-        "--resume",
-        action="store_true",
-        help="Resume from previous checkpoint"
+        "--resume", action="store_true", help="Resume from previous checkpoint"
     )
 
     # task type
     task_group = parser.add_mutually_exclusive_group()
     task_group.add_argument(
-        "--classification",
-        action="store_true",
-        help="Specifies a classification task"
+        "--classification", action="store_true", help="Specifies a classification task"
     )
     task_group.add_argument(
-        "--regression",
-        action="store_true",
-        help="Specifies a regression task"
+        "--regression", action="store_true", help="Specifies a regression task"
     )
     parser.add_argument(
         "--evaluate",
         action="store_true",
         help="Evaluate the model/ensemble",
     )
-    parser.add_argument(
-        "--train",
-        action="store_true",
-        help="Train the model/ensemble"
-    )
+    parser.add_argument("--train", action="store_true", help="Train the model/ensemble")
 
     # misc
+    parser.add_argument("--disable-cuda", action="store_true", help="Disable CUDA")
     parser.add_argument(
-        "--disable-cuda",
-        action="store_true",
-        help="Disable CUDA"
-        )
-    parser.add_argument(
-        "--log",
-        action="store_true",
-        help="Log training metrics to tensorboard"
+        "--log", action="store_true", help="Log training metrics to tensorboard"
     )
 
     args = parser.parse_args(sys.argv[1:])

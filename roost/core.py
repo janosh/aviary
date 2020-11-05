@@ -11,6 +11,8 @@ from torch import nn
 from torch.nn.functional import softmax
 from tqdm.autonotebook import trange
 
+from roost import ROOT
+
 
 class BaseModelClass(nn.Module, ABC):
     """
@@ -413,13 +415,13 @@ class LoadFeaturizer(Featurizer):
 
 def save_checkpoint(state, is_best, model_name, run_id):
     """
-    Saves a checkpoint and overwrites the best model when is_best = True
+    Saves a checkpoint and overwrites the best model when is_best==True
     """
-    checkpoint = f"models/{model_name}/checkpoint-r{run_id}.pth.tar"
+    checkpoint = f"{ROOT}/models/{model_name}/checkpoint-r{run_id}.pth.tar"
     torch.save(state, checkpoint)
 
     if is_best:
-        best = f"models/{model_name}/best-r{run_id}.pth.tar"
+        best = f"{ROOT}/models/{model_name}/best-r{run_id}.pth.tar"
         torch.save(state, best)
 
 
