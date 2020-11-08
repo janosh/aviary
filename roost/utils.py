@@ -102,7 +102,7 @@ def init_model(
 
         model.to(device)
 
-    # Select Optimiser
+    # Select optimizer
     if optim == "SGD":
         optimizer = torch.optim.SGD(
             model.parameters(),
@@ -313,20 +313,20 @@ def results_regression(
         with torch.no_grad():
             idx, comp, y_test, output = model.predict(generator=test_generator)
 
+        output = output.data.cpu()  # move preds to CPU if model trained on GPU
         if robust:
             mean, log_std = output.chunk(2, dim=1)
-            pred = normalizer.denorm(mean.data.cpu())
-            ale_std = torch.exp(log_std).data.cpu() * normalizer.std
+            pred = normalizer.denorm(mean)
+            ale_std = torch.exp(log_std) * normalizer.std
             y_ale[j, :] = ale_std.view(-1).numpy()
         else:
-            pred = normalizer.denorm(output.data.cpu())
+            pred = normalizer.denorm(output)
 
         y_ensemble[j, :] = pred.view(-1).numpy()
 
     res = y_ensemble - y_test
-    mae = np.mean(np.abs(res), axis=1)
-    mse = np.mean(np.square(res), axis=1)
-    rmse = np.sqrt(mse)
+    mae = np.abs(res).mean(axis=1)
+    rmse = (res ** 2).mean(axis=1) ** 0.5
     r2 = r2_score(
         np.repeat(y_test[:, None], ensemble_folds, axis=1),
         y_ensemble.T,
@@ -339,14 +339,14 @@ def results_regression(
         print(f"MAE: {mae[0]:.4f}")
         print(f"RMSE: {rmse[0]:.4f}")
     else:
-        r2_avg = np.mean(r2)
-        r2_std = np.std(r2)
+        r2_avg = r2.mean()
+        r2_std = r2.std()
 
-        mae_avg = np.mean(mae)
-        mae_std = np.std(mae) / np.sqrt(mae.shape[0])
+        mae_avg = mae.mean()
+        mae_std = mae.std() / np.sqrt(mae.shape[0])
 
-        rmse_avg = np.mean(rmse)
-        rmse_std = np.std(rmse) / np.sqrt(rmse.shape[0])
+        rmse_avg = rmse.mean()
+        rmse_std = rmse.std() / np.sqrt(rmse.shape[0])
 
         print("\nModel Performance Metrics:")
         print(f"R2 Score: {r2_avg:.4f} +/- {r2_std:.4f}")

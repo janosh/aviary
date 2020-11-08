@@ -5,7 +5,7 @@
 
 #! sbatch directives start ###############################
 #! Name of the job (can also be passed at CLI via sbatch -J job_name which overrides this value)
-#SBATCH -J mnf-roost
+#SBATCH -J mnf
 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'):
 #SBATCH -A LEE-JR769-SL2-GPU
@@ -50,11 +50,11 @@ module load rhel7/default-gpu              # REQUIRED - loads the basic environm
 #! Insert additional module load commands after this line if needed:
 
 #! --- Single Job ---
-CMD="python examples/mnf-roost.py $args"
+CMD="python examples/mnf.py $args"
 #! submit with `sbatch hpc/gpu_submit`
 
 # --- Array Job ---
-# CMD="python examples/mnf-roost.py $SLURM_ARRAY_TASK_ID"
+# CMD="python examples/mnf.py $SLURM_ARRAY_TASK_ID"
 #! submit with `sbatch --array=0-15 hpc/gpu_submit`
 #! then in the Python script, read the task id via: ask_id = int(sys.argv[1])
 #! to run a grid of experiments, use something like:
