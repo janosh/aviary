@@ -190,7 +190,10 @@ def collate_batch(dataset_list):
 
 
 def format_composition(comp):
-    """format str to ensure weights are explicate, example: BaCu3 -> Ba1Cu3"""
+    """
+    format composition str to ensure weights are explicit
+    example: BaCu3 -> Ba1Cu3
+    """
     subst = r"\g<1>1.0"
     comp = re.sub(r"[\d.]+", lambda x: str(float(x.group())), comp.rstrip())
     comp = re.sub(r"([A-Z][a-z](?![0-9]))", subst, comp)
@@ -252,7 +255,7 @@ def update_weights(comp, weight):
     return new_comp
 
 
-class Node(object):
+class Node:
     """ Node class for tree data structure """
 
     def __init__(self, parent, val=None):

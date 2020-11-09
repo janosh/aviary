@@ -161,12 +161,7 @@ def main(
         "out_hidden": [1024, 512, 256, 128, 64],
     }
 
-    os.makedirs(f"{ROOT}/models/{model_name}/", exist_ok=True)
-
-    if log:
-        os.makedirs("runs/", exist_ok=True)
-
-    os.makedirs("results/", exist_ok=True)
+    os.makedirs(f"{ROOT}/models/{model_name}{'/runs' if log else ''}", exist_ok=True)
 
     if train:
         train_ensemble(

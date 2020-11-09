@@ -51,9 +51,7 @@ data_path = f"{ROOT}/data/datasets/{data_path}"
 
 
 # %%
-dataset = CompositionData(data_path=data_path, fea_path=fea_path, task=task)
-n_targets = dataset.n_targets
-elem_emb_len = dataset.elem_emb_len
+dataset = CompositionData(data_path, fea_path, task)
 
 train_idx = list(range(len(dataset)))
 
@@ -98,8 +96,8 @@ restart_params = {
 model_params = {
     "task": task,
     "robust": robust,
-    "n_targets": n_targets,
-    "elem_emb_len": elem_emb_len,
+    "n_targets": dataset.n_targets,
+    "elem_emb_len": dataset.elem_emb_len,
     "elem_fea_len": elem_fea_len,
     "n_graph": n_graph,
     "elem_heads": 3,
@@ -112,10 +110,8 @@ model_params = {
     "use_mnf": use_mnf,
 }
 
-os.makedirs(f"{ROOT}/models/{model_name}", exist_ok=True)
-os.makedirs(f"{ROOT}/results", exist_ok=True)
-if log:
-    os.makedirs(f"{ROOT}/runs", exist_ok=True)
+
+os.makedirs(f"{ROOT}/models/{model_name}{'/runs' if log else ''}", exist_ok=True)
 
 
 # %% Train a Roost model
@@ -136,11 +132,8 @@ train_ensemble(
 
 
 # %% Evaluate a Roost model
-data_reset = {
-    "batch_size": 16 * batch_size,  # faster model inference
-    "shuffle": False,  # need fixed data order due to ensembling
-}
-data_params.update(data_reset)
+data_params["batch_size"] = 64 * batch_size  # faster model inference
+data_params["shuffle"] = False  # need fixed data order due to ensembling
 
 results_regression(
     model_class=Roost,

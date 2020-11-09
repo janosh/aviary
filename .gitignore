@@ -1,8 +1,7 @@
-*.out
-*.tar
-runs
 *.egg-info
-results
+models
 dist
 *.log
 __pycache__
+# slurm output log files on CSD3
+*.out

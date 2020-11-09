@@ -175,7 +175,7 @@ class DescriptorNetwork(nn.Module):
                 # attnhead(elem_fea, index=cry_elem_idx)
             )
 
-        return torch.mean(torch.stack(head_fea), dim=0)
+        return torch.stack(head_fea).mean(dim=0)
 
 
 class MessageLayer(nn.Module):

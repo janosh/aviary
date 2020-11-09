@@ -249,7 +249,7 @@ class BaseModelClass(nn.Module, ABC):
             torch.cat(test_output, dim=0),
         )
 
-    def featurise(self, generator):
+    def featurize(self, generator):
         """Generate features for a list of composition strings. When using Roost,
         this runs only the message-passing part of the model without the ResNet.
 
@@ -284,7 +284,7 @@ class BaseModelClass(nn.Module, ABC):
         raise NotImplementedError("forward() is not defined!")
 
 
-class AverageMeter(object):
+class AverageMeter:
     """Computes and stores the average and current value"""
 
     def __init__(self):
@@ -303,7 +303,7 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-class RegressionMetrics(object):
+class RegressionMetrics:
     """Computes and stores average metrics for regression tasks"""
 
     def __init__(self):
@@ -322,7 +322,7 @@ class RegressionMetrics(object):
         return {"MAE": self.mae_meter.avg, "RMSE": self.rmse_meter.avg}
 
 
-class ClassificationMetrics(object):
+class ClassificationMetrics:
     """Computes and stores average metrics for classification tasks"""
 
     def __init__(self):
@@ -350,8 +350,8 @@ class Normalizer:
 
     def fit(self, tensor, dim=0, keepdim=False):
         """tensor is taken as a sample to calculate the mean and std"""
-        self.mean = torch.mean(tensor, dim, keepdim)
-        self.std = torch.std(tensor, dim, keepdim)
+        self.mean = tensor.mean(dim, keepdim)
+        self.std = tensor.std(dim, keepdim)
 
     def norm(self, tensor):
         assert [self.mean, self.std] != [None, None], "Normalizer must be fit first"
@@ -369,7 +369,7 @@ class Normalizer:
         self.std = state_dict["std"].cpu()
 
 
-class Featurizer(object):
+class Featurizer:
     """
     Base class for featurising nodes and edges.
     """

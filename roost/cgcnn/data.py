@@ -164,7 +164,7 @@ class CrystalGraphData(Dataset):
         return (atom_fea, nbr_fea, self_fea_idx, nbr_fea_idx), target, comp, cif_id
 
 
-class GaussianDistance(object):
+class GaussianDistance:
     """
     Expands the distance by Gaussian basis.
 

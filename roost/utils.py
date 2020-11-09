@@ -33,7 +33,6 @@ def init_model(
     device=torch.device("cpu"),
     milestones=[],
     gamma=0.3,
-    resume=None,
     fine_tune=None,
     transfer=None,
 ):
@@ -140,7 +139,7 @@ def init_model(
             else:
                 raise NameError("Only L1 or L2 losses are allowed for regression tasks")
 
-    if resume:
+    if isfile(model_path) and not fine_tune and not transfer:
         optimizer.load_state_dict(checkpoint["optimizer"])
         normalizer.load_state_dict(checkpoint["normalizer"])
         scheduler.load_state_dict(checkpoint["scheduler"])
@@ -210,9 +209,8 @@ def train_ensemble(
             print(f"Dummy MAE: {(sample_target-normalizer.mean).abs().mean():.4f}")
 
         if log:
-            writer = SummaryWriter(
-                log_dir=(f"runs/{model_name}-r{j}_{datetime.now():%d-%m-%Y_%H-%M-%S}")
-            )
+            now = f"{datetime.now():%d-%m-%Y_%H-%M-%S}"
+            writer = SummaryWriter(f"{ROOT}/models/{model_name}/runs/r{j}/{now}")
         else:
             writer = None
 
@@ -271,26 +269,25 @@ def results_regression(
     )
 
     test_generator = DataLoader(test_set, **data_params)
+    # y_ale only needed if robust is True
+    y_ensemble, y_ale = np.zeros([2, ensemble_folds, len(test_set)])
 
-    y_ensemble = np.zeros((ensemble_folds, len(test_set)))
-    if robust:
-        y_ale = np.zeros((ensemble_folds, len(test_set)))
+    save_dir = f"{ROOT}/models/{model_name}"
 
     for j in range(ensemble_folds):
 
         if ensemble_folds == 1:
-            resume = f"{ROOT}/models/{model_name}/{eval_type}-r{run_id}.pth.tar"
-            print("Evaluating Model")
+            checkpoint_path = f"{save_dir}/{eval_type}-r{run_id}.pth.tar"
         else:
-            resume = f"{ROOT}/models/{model_name}/{eval_type}-r{j}.pth.tar"
+            checkpoint_path = f"{save_dir}/{eval_type}-r{j}.pth.tar"
             print(f"Evaluating Model {j + 1}/{ensemble_folds}")
 
-        assert isfile(resume), f"no checkpoint found at '{resume}'"
-        checkpoint = torch.load(resume, map_location=device)
+        assert isfile(checkpoint_path), f"no checkpoint found at '{checkpoint_path}'"
+        checkpoint = torch.load(checkpoint_path, map_location=device)
 
         assert (
             checkpoint["model_params"]["robust"] == robust
-        ), f"robustness of checkpoint '{resume}' is not {robust}"
+        ), f"robustness of checkpoint '{checkpoint_path}' is not {robust}"
 
         model = model_class(**checkpoint["model_params"], device=device)
         model.to(device)
@@ -300,7 +297,7 @@ def results_regression(
         normalizer.load_state_dict(checkpoint["normalizer"])
 
         with torch.no_grad():
-            idx, comp, y_test, output = model.predict(generator=test_generator)
+            idx, comp, y_test, output = model.predict(test_generator)
 
         output = output.data.cpu()  # move preds to CPU if model trained on GPU
         if robust:
@@ -365,15 +362,9 @@ def results_regression(
     df = pd.DataFrame({**core, **results})
 
     if ensemble_folds == 1:
-        df.to_csv(
-            index=False,
-            path_or_buf=(f"{ROOT}/results/test_results_{model_name}_r-{run_id}.csv"),
-        )
+        df.to_csv(f"{save_dir}/test_results-r{run_id}.csv", index=False)
     else:
-        df.to_csv(
-            index=False,
-            path_or_buf=(f"{ROOT}/results/ensemble_results_{model_name}.csv"),
-        )
+        df.to_csv(f"{save_dir}/ensemble_results-r{run_id}.csv", index=False)
 
 
 def results_classification(
@@ -410,13 +401,15 @@ def results_classification(
     recall = np.zeros((ensemble_folds))
     fscore = np.zeros((ensemble_folds))
 
+    save_dir = f"{ROOT}/models/{model_name}"
+
     for j in range(ensemble_folds):
 
         if ensemble_folds == 1:
-            resume = f"{ROOT}/models/{model_name}/{eval_type}-r{run_id}.pth.tar"
+            resume = f"{save_dir}/{eval_type}-r{run_id}.pth.tar"
             print("Evaluating Model")
         else:
-            resume = f"{ROOT}/models/{model_name}/{eval_type}-r{j}.pth.tar"
+            resume = f"{save_dir}/{eval_type}-r{j}.pth.tar"
             print(f"Evaluating Model {j + 1}/{ensemble_folds}")
 
         assert isfile(resume), f"no checkpoint found at '{resume}'"
@@ -430,7 +423,7 @@ def results_classification(
         model.load_state_dict(checkpoint["state_dict"])
 
         with torch.no_grad():
-            idx, comp, y_test, output = model.predict(generator=test_generator)
+            idx, comp, y_test, output = model.predict(test_generator)
 
         if model.robust:
             mean, log_std = output.chunk(2, dim=1)
@@ -505,7 +498,7 @@ def results_classification(
         print(f"Weighted F-score   : {ens_fscore:.4f}")
 
     # NOTE we save pre_logits rather than logits due to fact that with the
-    # hetroskedastic setup we want to be able to sample from the gaussian
+    # heteroscedastic setup we want to be able to sample from the gaussian
     # distributed pre_logits we parameterise.
     core = {"id": idx, "composition": comp, "target": y_test}
 
@@ -515,7 +508,7 @@ def results_classification(
             f"class-{lab}-pred_{n_ens}": val for lab, val in enumerate(y_pre_logit.T)
         }
         results.update(pred_dict)
-        if model.robust:
+        if robust:
             ale_dict = {
                 f"class-{lab}-ale_{n_ens}": val
                 for lab, val in enumerate(y_pre_ale[n_ens].T)
@@ -525,12 +518,6 @@ def results_classification(
     df = pd.DataFrame({**core, **results})
 
     if ensemble_folds == 1:
-        df.to_csv(
-            index=False,
-            path_or_buf=(f"{ROOT}/results/test_results_{model_name}_r-{run_id}.csv"),
-        )
+        df.to_csv(f"{save_dir}/test_results-r{run_id}.csv", index=False)
     else:
-        df.to_csv(
-            index=False,
-            path_or_buf=(f"{ROOT}/results/ensemble_results_{model_name}.csv"),
-        )
+        df.to_csv(f"{save_dir}/ensemble_results-r{run_id}.csv", index=False)
