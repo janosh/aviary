@@ -13,7 +13,6 @@ from roost.utils import results_regression, train_ensemble
 torch.manual_seed(0)  # ensure reproducible results
 
 # %%
-data_path = ROOT + "/data/datasets/expt-non-metals.csv"
 fea_path = ROOT + "/data/embeddings/matscholar-embedding.json"
 task = "regression"
 loss = "L1"
@@ -40,14 +39,15 @@ print(f"Now running on {device}")
 
 parser = ArgumentParser(allow_abbrev=False)
 parser.add_argument("-use_mnf", action="store_true")  # False by default
-parser.add_argument("-resume", action="store_true")
 parser.add_argument("-run_id", type=int, default=1)
-parser.add_argument("-model_name", type=str, default="mnf_roost")
+parser.add_argument("-model_name", type=str, default="mnf_expt")
 parser.add_argument("-epochs", type=int, default=100)
+parser.add_argument("-data_path", type=str, default="expt-non-metals.csv")
 flags, _ = parser.parse_known_args()
 
-args = ["use_mnf", "resume", "run_id", "model_name", "epochs"]
-use_mnf, resume, run_id, model_name, epochs = [vars(flags).get(x) for x in args]
+args = ["use_mnf", "run_id", "model_name", "epochs", "data_path"]
+use_mnf, run_id, model_name, epochs, data_path = [vars(flags).get(x) for x in args]
+data_path = f"{ROOT}/data/datasets/{data_path}"
 
 
 # %%
@@ -91,7 +91,6 @@ setup_params = {
 }
 
 restart_params = {
-    "resume": resume,
     "fine_tune": fine_tune,
     "transfer": transfer,
 }

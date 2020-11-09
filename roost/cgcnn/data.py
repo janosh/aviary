@@ -62,7 +62,7 @@ class CrystalGraphData(Dataset):
         # loads the wrong graph from the cache.
         self.use_cache = use_cache
         if self.use_cache:
-            self.cachedir = os.path.join(os.path.dirname(data_path), "cache/")
+            self.cachedir = os.path.join(os.path.dirname(data_path), "cache")
             os.makedirs(self.cachedir, exist_ok=True)
 
         # NOTE make sure to use dense datasets, here do not use the default na

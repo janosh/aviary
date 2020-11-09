@@ -36,7 +36,6 @@ def main(
     test_path=None,
     val_size=0.0,
     val_path=None,
-    resume=None,
     fine_tune=None,
     transfer=None,
     train=True,
@@ -163,7 +162,6 @@ def main(
     }
 
     restart_params = {
-        "resume": resume,
         "fine_tune": fine_tune,
         "transfer": transfer,
     }
@@ -438,9 +436,6 @@ def input_parser():
         type=str,
         metavar="PATH",
         help="Checkpoint path for transfer learning",
-    )
-    use_group.add_argument(
-        "--resume", action="store_true", help="Resume from previous checkpoint"
     )
 
     # task type

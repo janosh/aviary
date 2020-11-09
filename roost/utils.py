@@ -41,63 +41,54 @@ def init_model(
     task = model_params["task"]
     robust = model_params["robust"]
     n_targets = model_params["n_targets"]
+    model_path = f"{ROOT}/models/{model_name}/checkpoint-r{run_id}.pth.tar"
 
-    if fine_tune is not None:
-        print(f"Use material_nn and output_nn from '{fine_tune}' as a starting point")
-        checkpoint = torch.load(fine_tune, map_location=device)
+    if isfile(model_path):
+        print(f"Using existing model at '{model_path}' as a starting point")
+        checkpoint = torch.load(model_path, map_location=device)
         model = model_class(**checkpoint["model_params"], device=device)
         model.to(device)
         model.load_state_dict(checkpoint["state_dict"])
 
-        n_out_err = (
-            "cannot fine-tune between tasks with different numbers of outputs"
-            " - use transfer option instead"
-        )
+        if fine_tune:
+            n_out_err = (
+                "cannot fine-tune between tasks with different numbers of outputs"
+                " - use transfer option instead"
+            )
+            assert model.model_params["robust"] == robust, n_out_err
+            assert model.model_params["n_targets"] == n_targets, n_out_err
+        elif transfer:
+            model.task = task
+            model.model_params["task"] = task
+            model.robust = robust
+            model.model_params["robust"] = robust
+            model.model_params["n_targets"] = n_targets
 
-        assert model.model_params["robust"] == robust, n_out_err
-        assert model.model_params["n_targets"] == n_targets, n_out_err
+            # # NOTE currently if you use a model as a feature extractor and then
+            # # resume for a checkpoint of that model the material_nn unfreezes.
+            # # This is potentially not the behavior a user might expect.
+            # for p in model.material_nn.parameters():
+            #     p.requires_grad = False
 
-    elif transfer is not None:
-        print(
-            f"Use material_nn from '{transfer}' as a starting point and "
-            "train the output_nn from scratch"
-        )
-        checkpoint = torch.load(transfer, map_location=device)
-        model = model_class(**checkpoint["model_params"], device=device)
-        model.to(device)
-        model.load_state_dict(checkpoint["state_dict"])
+            output_dim = 2 * n_targets if robust else n_targets
+            dims = [
+                model_params["elem_fea_len"],
+                *model_params["out_hidden"],
+                output_dim,
+            ]
 
-        model.task = task
-        model.model_params["task"] = task
-        model.robust = robust
-        model.model_params["robust"] = robust
-        model.model_params["n_targets"] = n_targets
+            model.output_nn = ResidualNetwork(dims, use_mnf=model_params["use_mnf"])
+        else:  # default case: resume previous training with no changes to data or model
+            # TODO work out how to ensure that we are using the same optimizer
+            # when resuming such that the state dictionaries do not clash.
 
-        # # NOTE currently if you use a model as a feature extractor and then
-        # # resume for a checkpoint of that model the material_nn unfreezes.
-        # # This is potentially not the behavior a user might expect.
-        # for p in model.material_nn.parameters():
-        #     p.requires_grad = False
-
-        output_dim = 2 * n_targets if robust else n_targets
-        dims = [model_params["elem_fea_len"], *model_params["out_hidden"], output_dim]
-
-        model.output_nn = ResidualNetwork(dims, use_mnf=model_params["use_mnf"])
-
-    elif resume:
-        # TODO work out how to ensure that we are using the same optimizer
-        # when resuming such that the state dictionaries do not clash.
-        resume = f"{ROOT}/models/{model_name}/checkpoint-r{run_id}.pth.tar"
-        print(f"Resuming training from '{resume}'")
-        checkpoint = torch.load(resume, map_location=device)
-
-        model = model_class(**checkpoint["model_params"], device=device)
-        model.to(device)
-        model.load_state_dict(checkpoint["state_dict"])
-        model.epoch = checkpoint["epoch"]
-        model.best_val_score = checkpoint["best_val_score"]
+            print(f"Resuming training from '{model_path}'")
+            model.epoch = checkpoint["epoch"]
+            model.best_val_score = checkpoint["best_val_score"]
 
     else:
+        print("Training a new model scratch")
+        print(f"Checkpoints will be saved to {model_path}")
         model = model_class(device=device, **model_params)
 
         model.to(device)
@@ -214,11 +205,9 @@ def train_ensemble(
             sample_target = torch.Tensor(
                 train_set.dataset.df.iloc[train_set.indices, 2].values
             )
-            if not restart_params["resume"]:
+            if normalizer.mean is None:  # normalizer hasn't been fit yet
                 normalizer.fit(sample_target)
-            print(
-                f"Dummy MAE: {torch.mean(torch.abs(sample_target-normalizer.mean)):.4f}"
-            )
+            print(f"Dummy MAE: {(sample_target-normalizer.mean).abs().mean():.4f}")
 
         if log:
             writer = SummaryWriter(

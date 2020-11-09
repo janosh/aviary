@@ -138,9 +138,7 @@ class BaseModelClass(nn.Module, ABC):
     def evaluate(
         self, generator, criterion, optimizer, normalizer, action="train", verbose=False
     ):
-        """
-        evaluate the model
-        """
+        """evaluate the model"""
 
         if action == "val":
             self.eval()
@@ -155,6 +153,8 @@ class BaseModelClass(nn.Module, ABC):
             metric_meter = RegressionMetrics()
         elif self.task == "classification":
             metric_meter = ClassificationMetrics()
+        else:
+            raise ValueError(f"invalid task: {self.task}")
 
         with trange(len(generator), disable=(not verbose)) as t:
             # we do not need batch_comp or batch_ids when training

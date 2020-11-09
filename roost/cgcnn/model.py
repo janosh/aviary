@@ -83,7 +83,9 @@ class CrystalGraphConvNet(BaseModelClass):
             [elem_fea_len, *out_hidden, output_dim], nn.Softplus
         )
 
-    def forward(self, atom_fea, nbr_fea, self_fea_idx, nbr_fea_idx, crystal_atom_idx):
+    def forward(
+        self, atom_fea, nbr_fea, self_fea_idx, nbr_fea_idx, crystal_atom_idx, **kwargs
+    ):
         """
         Forward pass
 
