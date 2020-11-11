@@ -5,9 +5,9 @@ import sys
 import torch
 from sklearn.model_selection import train_test_split as split
 
-from roost.core import ROOT
 from roost.cgcnn.data import CrystalGraphData, collate_batch
 from roost.cgcnn.model import CrystalGraphConvNet
+from roost.core import ROOT
 from roost.utils import (
     results_classification,
     results_regression,
@@ -204,30 +204,21 @@ def main(
         }
         data_params.update(data_reset)
 
-        if task == "regression":
-            results_regression(
-                model_class=CrystalGraphConvNet,
-                model_name=model_name,
-                run_id=run_id,
-                ensemble_folds=ensemble,
-                test_set=test_set,
-                data_params=data_params,
-                robust=robust,
-                device=device,
-                eval_type="checkpoint",
-            )
-        elif task == "classification":
-            results_classification(
-                model_class=CrystalGraphConvNet,
-                model_name=model_name,
-                run_id=run_id,
-                ensemble_folds=ensemble,
-                test_set=test_set,
-                data_params=data_params,
-                robust=robust,
-                device=device,
-                eval_type="checkpoint",
-            )
+        results_func = (
+            results_regression if task == "regression" else results_classification
+        )
+
+        results_func(
+            model_class=CrystalGraphConvNet,
+            model_name=model_name,
+            run_id=run_id,
+            ensemble_folds=ensemble,
+            test_set=test_set,
+            data_params=data_params,
+            robust=robust,
+            device=device,
+            eval_type="checkpoint",
+        )
 
 
 def input_parser():

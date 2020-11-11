@@ -1,8 +1,11 @@
+scipy
 tqdm
-pandas
-pymatgen
-torch_scatter
 torch
 numpy
-scipy
+pymatgen
+matplotlib
+torch_scatter
+pandas
 scikit_learn
+pytest
+tensorboard

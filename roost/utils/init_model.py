@@ -3,8 +3,7 @@ from os.path import isfile
 import torch
 from torch.nn import CrossEntropyLoss, L1Loss, MSELoss, NLLLoss
 
-from roost.core import ROOT
-from roost.core import Normalizer, RobustL1Loss, RobustL2Loss
+from roost.core import ROOT, Normalizer, RobustL1Loss, RobustL2Loss
 from roost.segments import ResidualNetwork
 
 
@@ -73,7 +72,7 @@ def init_model(
             model.best_val_score = checkpoint["best_val_score"]
 
     else:
-        print("Training a new model scratch")
+        print("Training a new model from scratch")
         print(f"Checkpoints will be saved to {model_path}")
         model = model_class(device=device, **model_params)
 

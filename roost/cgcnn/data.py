@@ -127,13 +127,11 @@ class CrystalGraphData(Dataset):
                 # need to set a maximum number of neighbours but do so in
                 # order to replicate the original code.
                 if len(nbr) < self.max_num_nbr:
-                    nbr_fea_idx.extend(list(map(lambda x: x[2], nbr)))
-                    nbr_fea.extend(list(map(lambda x: x[1], nbr)))
+                    nbr_fea_idx.extend([x[2] for x in nbr])
+                    nbr_fea.extend([x[1] for x in nbr])
                 else:
-                    nbr_fea_idx.extend(
-                        list(map(lambda x: x[2], nbr[: self.max_num_nbr]))
-                    )
-                    nbr_fea.extend(list(map(lambda x: x[1], nbr[: self.max_num_nbr])))
+                    nbr_fea_idx.extend([x[2] for x in nbr[: self.max_num_nbr]])
+                    nbr_fea.extend([x[1] for x in nbr[: self.max_num_nbr]])
 
                 if len(nbr) == 0:
                     raise ValueError(

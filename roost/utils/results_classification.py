@@ -11,8 +11,7 @@ from sklearn.metrics import (
 )
 from torch.utils.data import DataLoader
 
-from roost.core import ROOT
-from roost.core import sampled_softmax
+from roost.core import ROOT, sampled_softmax
 
 
 def results_classification(
@@ -43,11 +42,7 @@ def results_classification(
     if robust:
         y_pre_ale = []
 
-    acc = np.zeros((ensemble_folds))
-    roc_auc = np.zeros((ensemble_folds))
-    precision = np.zeros((ensemble_folds))
-    recall = np.zeros((ensemble_folds))
-    fscore = np.zeros((ensemble_folds))
+    acc, roc_auc, precision, recall, fscore = np.zeros([5, ensemble_folds])
 
     save_dir = f"{ROOT}/models/{model_name}"
 

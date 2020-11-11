@@ -93,41 +93,31 @@ def results_regression(
         multioutput="raw_values",
     )
 
+    r2_avg = r2.mean()
+    r2_std = r2.std()
+
+    mae_avg = mae.mean()
+    mae_std = mae.std() / np.sqrt(mae.shape[0])
+
+    rmse_avg = rmse.mean()
+    rmse_std = rmse.std() / np.sqrt(rmse.shape[0])
+
     if ensemble_folds == 1:
         print("\nModel Performance Metrics:")
-        print(f"R2 Score: {r2[0]:.4f} ")
-        print(f"MAE: {mae[0]:.4f}")
-        print(f"RMSE: {rmse[0]:.4f}")
-        if repeat > 1:
-            if robust:
-                y_std = (std_al.numpy() ** 2 + std_ep ** 2) ** 0.5
-            else:
-                y_std = std_ep
-        elif robust:
-            y_std = std_al
-        if robust or repeat > 1:
-            plots.err_decay(y_test, pred, y_std)
+        print(f"R2 Score: {r2_avg:.4f} ")
+        print(f"MAE: {mae_avg:.4f}")
+        print(f"RMSE: {rmse_avg:.4f}")
     else:
-        r2_avg = r2.mean()
-        r2_std = r2.std()
-
-        mae_avg = mae.mean()
-        mae_std = mae.std() / np.sqrt(mae.shape[0])
-
-        rmse_avg = rmse.mean()
-        rmse_std = rmse.std() / np.sqrt(rmse.shape[0])
-
         print("\nModel Performance Metrics:")
         print(f"R2 Score: {r2_avg:.4f} +/- {r2_std:.4f}")
         print(f"MAE: {mae_avg:.4f} +/- {mae_std:.4f}")
         print(f"RMSE: {rmse_avg:.4f} +/- {rmse_std:.4f}")
 
         # calculate metrics and errors with associated errors for ensembles
-        y_ens = np.mean(y_ensemble, axis=0)
+        y_ens = y_ensemble.mean(axis=0)
 
         mae_ens = np.abs(y_test - y_ens).mean()
-        mse_ens = np.square(y_test - y_ens).mean()
-        rmse_ens = np.sqrt(mse_ens)
+        rmse_ens = ((y_test - y_ens) ** 2).mean() ** 0.5
 
         r2_ens = r2_score(y_test, y_ens)
 
@@ -152,3 +142,5 @@ def results_regression(
         df.to_csv(f"{save_dir}/test_results-r{run_id}.csv", index=False)
     else:
         df.to_csv(f"{save_dir}/ensemble_results-r{run_id}.csv", index=False)
+
+    return r2_avg, mae_avg, rmse_avg
