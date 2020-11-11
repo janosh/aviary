@@ -15,7 +15,7 @@ from torch.nn import CrossEntropyLoss, L1Loss, MSELoss, NLLLoss
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from roost import ROOT
+from roost import ROOT, plots
 from roost.core import Normalizer, RobustL1Loss, RobustL2Loss, sampled_softmax
 from roost.segments import ResidualNetwork
 
@@ -93,23 +93,16 @@ def init_model(
         model.to(device)
 
     # Select optimizer
+    assert optim in ["SGD", "Adam", "AdamW"], "Only SGD, Adam or AdamW allowed"
+    optim_class = getattr(torch.optim, optim)
+    optim_params = {
+        "params": model.parameters(),
+        "lr": learning_rate,
+        "weight_decay": weight_decay,
+    }
     if optim == "SGD":
-        optimizer = torch.optim.SGD(
-            model.parameters(),
-            lr=learning_rate,
-            weight_decay=weight_decay,
-            momentum=momentum,
-        )
-    elif optim == "Adam":
-        optimizer = torch.optim.Adam(
-            model.parameters(), lr=learning_rate, weight_decay=weight_decay
-        )
-    elif optim == "AdamW":
-        optimizer = torch.optim.AdamW(
-            model.parameters(), lr=learning_rate, weight_decay=weight_decay
-        )
-    else:
-        raise NameError("Only SGD, Adam or AdamW are allowed as --optim")
+        optim_params["momentum"] = momentum
+    optimizer = optim_class(**optim_params)
 
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
         optimizer, milestones=milestones, gamma=gamma
@@ -257,6 +250,7 @@ def results_regression(
     robust,
     device=torch.device("cpu"),
     eval_type="checkpoint",
+    repeat=1,  # use with MNF to get epistemic uncertainty
 ):
     """
     take an ensemble of models and evaluate their performance on the test set
@@ -297,18 +291,28 @@ def results_regression(
         normalizer.load_state_dict(checkpoint["normalizer"])
 
         with torch.no_grad():
-            idx, comp, y_test, output = model.predict(test_generator)
+            idx, comp, y_test, output = model.predict(test_generator, repeat=repeat)
 
-        output = output.data.cpu()  # move preds to CPU if model trained on GPU
+        output = (
+            output.data.cpu().squeeze()
+        )  # move preds to CPU in case model ran on GPU
         if robust:
-            mean, log_std = output.chunk(2, dim=1)
-            pred = normalizer.denorm(mean)
-            ale_std = torch.exp(log_std) * normalizer.std
-            y_ale[j, :] = ale_std.view(-1).numpy()
-        else:
-            pred = normalizer.denorm(output)
+            mean, log_std_al = [x.squeeze() for x in output.chunk(2, dim=1)]
+            if repeat > 1:
+                log_std_al = log_std_al.mean(-1)
+                std_ep = (mean.std(-1) * normalizer.std).numpy()
+                mean = mean.mean(-1)
 
-        y_ensemble[j, :] = pred.view(-1).numpy()
+            pred = normalizer.denorm(mean).numpy()
+            std_al = log_std_al.exp() * normalizer.std
+            y_ale[j, :] = std_al.view(-1).numpy()
+        else:
+            if repeat > 1:
+                std_ep = (output.std(-1) * normalizer.std).numpy() * 100
+                output = output.mean(-1)
+            pred = normalizer.denorm(output).numpy()
+
+        y_ensemble[j, :] = pred
 
     res = y_ensemble - y_test
     mae = np.abs(res).mean(axis=1)
@@ -324,6 +328,15 @@ def results_regression(
         print(f"R2 Score: {r2[0]:.4f} ")
         print(f"MAE: {mae[0]:.4f}")
         print(f"RMSE: {rmse[0]:.4f}")
+        if repeat > 1:
+            if robust:
+                y_std = (std_al.numpy() ** 2 + std_ep ** 2) ** 0.5
+            else:
+                y_std = std_ep
+        elif robust:
+            y_std = std_al
+        if robust or repeat > 1:
+            plots.err_decay(y_test, pred, y_std)
     else:
         r2_avg = r2.mean()
         r2_std = r2.std()
@@ -354,10 +367,14 @@ def results_regression(
         print(f"RMSE : {rmse_ens:.4f}")
 
     core = {"id": idx, "composition": comp, "target": y_test}
-    results = {f"pred_{n_ens}": val for (n_ens, val) in enumerate(y_ensemble)}
-    if model.robust:
-        ale = {f"ale_{n_ens}": val for (n_ens, val) in enumerate(y_ale)}
+    results = {f"pred_{n}": val for (n, val) in enumerate(y_ensemble)}
+    if robust:
+        ale = {f"std_al_{n}": val for (n, val) in enumerate(y_ale)}
         results.update(ale)
+    if repeat > 1:
+        results.update({f"std_ep_repeat_{repeat}": std_ep})
+    if robust and repeat > 1:
+        results.update({"std_tot": y_std})
 
     df = pd.DataFrame({**core, **results})
 
@@ -407,7 +424,6 @@ def results_classification(
 
         if ensemble_folds == 1:
             resume = f"{save_dir}/{eval_type}-r{run_id}.pth.tar"
-            print("Evaluating Model")
         else:
             resume = f"{save_dir}/{eval_type}-r{j}.pth.tar"
             print(f"Evaluating Model {j + 1}/{ensemble_folds}")

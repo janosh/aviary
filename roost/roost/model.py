@@ -74,7 +74,9 @@ class Roost(BaseModelClass):
         )
         # self.output_nn = SimpleNetwork([elem_fea_len, *out_hidden, output_dim], nn.ReLU)
 
-    def forward(self, elem_weights, elem_fea, self_fea_idx, nbr_fea_idx, cry_elem_idx):
+    def forward(
+        self, elem_weights, elem_fea, self_fea_idx, nbr_fea_idx, cry_elem_idx, repeat=1
+    ):
         """
         Forward pass through the material_nn and output_nn
         """
@@ -83,7 +85,7 @@ class Roost(BaseModelClass):
         )
 
         # apply neural network to map from learned features to target
-        return self.output_nn(crys_fea)
+        return torch.stack([self.output_nn(crys_fea) for _ in range(repeat)], dim=-1)
 
 
 class DescriptorNetwork(nn.Module):

@@ -211,7 +211,7 @@ class BaseModelClass(nn.Module, ABC):
 
         return loss_meter.avg, metric_meter.metric_dict
 
-    def predict(self, generator, verbose=False):
+    def predict(self, generator, verbose=False, repeat=1):
         """
         evaluate the model
         """
@@ -225,14 +225,14 @@ class BaseModelClass(nn.Module, ABC):
         self.eval()
 
         with torch.no_grad():
-            with trange(len(generator), disable=(not verbose)) as t:
+            with trange(len(generator), disable=(not verbose)) as pbar:
                 for input_, target, batch_comp, batch_ids in generator:
 
                     # move tensors to device (GPU or CPU)
-                    input_ = (tensor.to(self.device) for tensor in input_)
+                    input_ = (t.to(self.device) for t in input_)
 
                     # compute output
-                    output = self(*input_)
+                    output = self(*input_, repeat=repeat)
 
                     # collect the model outputs
                     test_ids += batch_ids
@@ -240,7 +240,7 @@ class BaseModelClass(nn.Module, ABC):
                     test_targets.append(target)
                     test_output.append(output)
 
-                    t.update()
+                    pbar.update()
 
         return (
             test_ids,

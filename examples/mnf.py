@@ -16,7 +16,7 @@ torch.manual_seed(0)  # ensure reproducible results
 fea_path = ROOT + "/data/embeddings/matscholar-embedding.json"
 task = "regression"
 loss = "L1"
-robust = False
+robust = True
 elem_fea_len = 64
 n_graph = 3
 ensemble = 1
@@ -34,19 +34,20 @@ learning_rate = 3e-4
 momentum = 0.9
 weight_decay = 1e-6
 batch_size = 128
+test_repeat = 30
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 print(f"Now running on {device}")
 
 parser = ArgumentParser(allow_abbrev=False)
-parser.add_argument("-use_mnf", action="store_true")  # False by default
+parser.add_argument("-model_name", type=str, default="robust_mnf_oqmd")
 parser.add_argument("-run_id", type=int, default=1)
-parser.add_argument("-model_name", type=str, default="mnf_expt")
-parser.add_argument("-epochs", type=int, default=100)
-parser.add_argument("-data_path", type=str, default="expt-non-metals.csv")
+parser.add_argument("-use_mnf", action="store_false")  # False by default
+parser.add_argument("-epochs", type=int, default=0)
+parser.add_argument("-data_path", type=str, default="oqmd-form-enthalpy.csv")
 flags, _ = parser.parse_known_args()
 
-args = ["use_mnf", "run_id", "model_name", "epochs", "data_path"]
-use_mnf, run_id, model_name, epochs, data_path = [vars(flags).get(x) for x in args]
+args = ["model_name", "run_id", "use_mnf", "epochs", "data_path"]
+model_name, run_id, use_mnf, epochs, data_path = [vars(flags).get(x) for x in args]
 data_path = f"{ROOT}/data/datasets/{data_path}"
 
 
@@ -145,4 +146,5 @@ results_regression(
     robust=robust,
     eval_type="checkpoint",
     device=device,
+    repeat=test_repeat,
 )
