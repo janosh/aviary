@@ -1,6 +1,7 @@
 import gc
 import json
 from abc import ABC, abstractmethod
+from os.path import abspath, dirname
 
 import numpy as np
 import torch
@@ -11,7 +12,7 @@ from torch import nn
 from torch.nn.functional import softmax
 from tqdm.autonotebook import trange
 
-from roost import ROOT
+ROOT = dirname(dirname(abspath(__file__)))
 
 
 class BaseModelClass(nn.Module, ABC):

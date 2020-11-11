@@ -5,7 +5,7 @@ import sys
 import torch
 from sklearn.model_selection import train_test_split as split
 
-from roost import ROOT
+from roost.core import ROOT
 from roost.roost.data import CompositionData, collate_batch
 from roost.roost.model import Roost
 from roost.utils import (

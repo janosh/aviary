@@ -5,7 +5,7 @@ import sys
 import torch
 from sklearn.model_selection import train_test_split as split
 
-from roost import ROOT
+from roost.core import ROOT
 from roost.cgcnn.data import CrystalGraphData, collate_batch
 from roost.cgcnn.model import CrystalGraphConvNet
 from roost.utils import (

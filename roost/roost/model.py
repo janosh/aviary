@@ -85,7 +85,11 @@ class Roost(BaseModelClass):
         )
 
         # apply neural network to map from learned features to target
-        return torch.stack([self.output_nn(crys_fea) for _ in range(repeat)], dim=-1)
+        if repeat > 1:
+            return torch.stack(
+                [self.output_nn(crys_fea) for _ in range(repeat)], dim=-1
+            )
+        return self.output_nn(crys_fea)
 
 
 class DescriptorNetwork(nn.Module):

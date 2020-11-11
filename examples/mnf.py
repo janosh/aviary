@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 import torch
 from sklearn.model_selection import train_test_split as split
 
-from roost import ROOT
+from roost.core import ROOT
 from roost.roost.data import CompositionData, collate_batch
 from roost.roost.model import Roost
 from roost.utils import results_regression, train_ensemble
@@ -42,7 +42,7 @@ parser = ArgumentParser(allow_abbrev=False)
 parser.add_argument("-model_name", type=str, default="robust_mnf_oqmd")
 parser.add_argument("-run_id", type=int, default=1)
 parser.add_argument("-use_mnf", action="store_false")  # False by default
-parser.add_argument("-epochs", type=int, default=0)
+parser.add_argument("-epochs", type=int, default=10)
 parser.add_argument("-data_path", type=str, default="oqmd-form-enthalpy.csv")
 flags, _ = parser.parse_known_args()
 
