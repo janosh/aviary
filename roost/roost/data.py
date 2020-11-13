@@ -279,7 +279,7 @@ def build_tree(root, data):
 def print_tree(current, depth=0):
     """ print out the tree structure """
     for child in current.children:
-        print("  " * depth + "%r" % child)
+        print("  " * depth + repr(child))
         print_tree(child, depth + 1)
 
 

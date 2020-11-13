@@ -2,11 +2,7 @@ import torch
 from torch import nn
 
 from roost.core import BaseModelClass
-from roost.segments import (
-    ResidualNetwork,
-    SimpleNetwork,
-    WeightedAttentionPooling,
-)
+from roost.segments import ResidualNet, SimpleNet, WeightedAttentionPooling
 
 
 class Roost(BaseModelClass):
@@ -34,7 +30,7 @@ class Roost(BaseModelClass):
         cry_heads=3,
         cry_gate=[256],
         cry_msg=[256],
-        out_hidden=[512, 256, 128, 64, 32],
+        out_hidden=[1024, 512, 256, 128, 64],
         use_mnf=False,
         **kwargs
     ):
@@ -68,11 +64,9 @@ class Roost(BaseModelClass):
         # define an output neural network
         output_dim = 2 * n_targets if self.robust else n_targets
 
-        # self.output_nn = nn.Linear(elem_fea_len, output_dim)
-        self.output_nn = ResidualNetwork(
+        self.output_nn = ResidualNet(
             dims=[elem_fea_len, *out_hidden, output_dim], use_mnf=use_mnf
         )
-        # self.output_nn = SimpleNetwork([elem_fea_len, *out_hidden, output_dim], nn.ReLU)
 
     def forward(
         self, elem_weights, elem_fea, self_fea_idx, nbr_fea_idx, cry_elem_idx, repeat=1
@@ -127,8 +121,8 @@ class DescriptorNetwork(nn.Module):
         # define a global pooling function for materials
         cry_pool_layers = [
             WeightedAttentionPooling(
-                gate_nn=SimpleNetwork([elem_fea_len, *cry_gate, 1]),
-                message_nn=SimpleNetwork([elem_fea_len, *cry_msg, elem_fea_len]),
+                gate_nn=SimpleNet([elem_fea_len, *cry_gate, 1]),
+                message_nn=SimpleNet([elem_fea_len, *cry_msg, elem_fea_len]),
             )
             for _ in range(cry_heads)
         ]
@@ -196,8 +190,8 @@ class MessageLayer(nn.Module):
         # Pooling and Output
         pool_layers = [
             WeightedAttentionPooling(
-                gate_nn=SimpleNetwork([2 * elem_fea_len, *elem_gate, 1]),
-                message_nn=SimpleNetwork([2 * elem_fea_len, *elem_msg, elem_fea_len]),
+                gate_nn=SimpleNet([2 * elem_fea_len, *elem_gate, 1]),
+                message_nn=SimpleNet([2 * elem_fea_len, *elem_msg, elem_fea_len]),
             )
             for _ in range(elem_heads)
         ]
@@ -238,13 +232,9 @@ class MessageLayer(nn.Module):
         # sum selectivity over the neighbors to get elements
         head_fea = []
         for attnhead in self.pooling:
-            head_fea.append(
-                attnhead(fea, index=self_fea_idx, weights=elem_nbr_weights)
-                # attnhead(self.mean_msg(fea), index=self_fea_idx)
-            )
+            head_fea.append(attnhead(fea, index=self_fea_idx, weights=elem_nbr_weights))
 
         # average the attention heads
         fea = torch.mean(torch.stack(head_fea), dim=0)
 
         return fea + elem_in_fea
-        # return fea

@@ -252,7 +252,7 @@ class BaseModelClass(nn.Module, ABC):
 
     def featurize(self, generator):
         """Generate features for a list of composition strings. When using Roost,
-        this runs only the message-passing part of the model without the ResNet.
+        this runs only the message-passing part of the model without the ResidualNet.
 
         Args:
             generator (DataLoader): PyTorch loader with the same data format used in fit()

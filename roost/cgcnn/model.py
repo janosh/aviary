@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 from roost.core import BaseModelClass
-from roost.segments import MeanPooling, SimpleNetwork, SumPooling
+from roost.segments import MeanPooling, SimpleNet, SumPooling
 
 
 class CrystalGraphConvNet(BaseModelClass):
@@ -76,9 +76,7 @@ class CrystalGraphConvNet(BaseModelClass):
         out_hidden = [h_fea_len] * n_hidden
 
         # NOTE the original model used softpluses as activation functions
-        self.output_nn = SimpleNetwork(
-            [elem_fea_len, *out_hidden, output_dim], nn.Softplus
-        )
+        self.output_nn = SimpleNet([elem_fea_len, *out_hidden, output_dim], nn.Softplus)
 
     def forward(
         self, atom_fea, nbr_fea, self_fea_idx, nbr_fea_idx, crystal_atom_idx, **kwargs
