@@ -2,7 +2,7 @@
 
 ## Submissions Scripts
 
-To submit a CPU or GPU job, use `sbatch hpc/(c|g)pu_submit` after editing those files appropriately. Rather than changing all the parameters directly in those files, you can pass in variables defined directly on the command line into those scripts as follows:
+To submit a CPU or GPU job, use `sbatch hpc/(c|g)pu_submit` after editing those files (if necessary). Rather than changing parameters directly in those files, you can pass in variables via the command line as follows:
 
 ```sh
 sbatch --export var1='foo',var2='bar' hpc/(c|g)pu_submit
@@ -11,13 +11,38 @@ sbatch --export var1='foo',var2='bar' hpc/(c|g)pu_submit
 and then using those variables as e.g.
 
 ```sh
-CMD="echo var1 is '$var1' and var2 is '$var1'"
+echo var1 is '$var1' and var2 is '$var1'
 ```
 
-in the submission scripts. To change the job name and run time from the command line, use `sbatch -J job_name -t 1:0:0` (time format `h:m:s`). So in full:
+To change the job name and run time, use `sbatch -J job_name -t 1:0:0` (time format `h:m:s`). A complete example would be
 
 ```sh
-sbatch -J roost-mnf -t 1:0:0 --export args='-use_mnf -resume -model_name=mnf_roost' hpc/gpu_submit
+sbatch -J roost -t 1:0:0 --export CMD='python examples/roost.py --epoch 10' hpc/gpu_submit
+```
+
+## Array Jobs
+
+To submit an array of, say 16 jobs, use
+
+```sh
+sbatch -J roost -t 1:0:0 --array 0-15 --export CMD="python examples/roost.py --epoch 10 --data-seed \$SLURM_ARRAY_TASK_ID" hpc/gpu_submit
+```
+
+Note the backslash in front of `\$SLURM_ARRAY_TASK_ID` which ensures the variable isn't expanded at job submission time but at execution time where it will have a value.
+
+You may also read the task ID directly in the Python script via
+
+```py
+task_id = int(sys.argv[1])
+```
+
+This can for instance be used to run a grid of experiments:
+
+```py
+task_id = int(sys.argv[1])
+
+drop_rates, learning_rates = [0.1, 0.2, 0.3, 0.5], [1e-4, 3e-4, 1e-3, 3e-3]
+drop_rate, learning_rate = tuple(itertools.product(drop_rates, learning_rates))[task_id]
 ```
 
 ## Environment
@@ -109,3 +134,28 @@ Thu Oct  8 20:15:44 2020
 ## Debugging Tips
 
 If the interactive window won't launch over SSH, see [vscode-python#12560](https://github.com/microsoft/vscode-python/issues/12560).
+
+## Syncing Results
+
+To sync results back from CSD3 to your local machine, use
+
+```sh
+rsync -av --delete login.hpc.cam.ac.uk:roost/models .
+```
+
+`-a`: archive mode, `-v`: increase verbosity, `--delete`: remove files from target not found in source.
+
+If CSD3 was setup as an SSH alias in `~/.ssh/config`,
+
+```text
+Host csd3
+  Hostname login.hpc.cam.ac.uk
+```
+
+Then it's simply:
+
+```sh
+rsync -av --delete csd3:roost/models .
+```
+
+Add `-n` to test the command in a dry-run first. Will list each action that would have been performed.
