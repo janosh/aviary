@@ -6,8 +6,8 @@ import torch
 from sklearn.model_selection import train_test_split as split
 
 from roost.core import ROOT
-from roost.roost.data import CompositionData, collate_batch
-from roost.roost.model import Roost
+from roost.roost import CompositionData, Roost
+from roost.roost.utils import collate_batch
 from roost.utils import results_regression, train_ensemble
 
 torch.manual_seed(0)  # ensure reproducible results
