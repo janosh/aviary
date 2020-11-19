@@ -1,14 +1,12 @@
 import argparse
-import os
 import sys
 
 import torch
 from sklearn.model_selection import train_test_split as split
 
-from roost.core import ROOT
-from roost.roost import CompositionData, Roost
-from roost.roost.utils import collate_batch
+from roost.roost import CompositionData, Roost, collate_batch
 from roost.utils import (
+    make_model_dir,
     results_classification,
     results_regression,
     train_ensemble,
@@ -74,6 +72,8 @@ def main(
     assert not (fine_tune and transfer), (
         "Cannot fine-tune and" " transfer checkpoint(s) at the same time."
     )
+
+    model_dir = make_model_dir(model_name, ensemble, run_id)
 
     dataset = CompositionData(data_path=data_path, fea_path=fea_path, task=task)
     n_targets = dataset.n_targets
@@ -161,13 +161,10 @@ def main(
         "out_hidden": [1024, 512, 256, 128, 64],
     }
 
-    os.makedirs(f"{ROOT}/models/{model_name}{'/runs' if log else ''}", exist_ok=True)
-
     if train:
         train_ensemble(
             model_class=Roost,
-            model_name=model_name,
-            run_id=run_id,
+            model_dir=model_dir,
             ensemble_folds=ensemble,
             epochs=epochs,
             train_set=train_set,
@@ -190,8 +187,7 @@ def main(
         if task == "regression":
             results_regression(
                 model_class=Roost,
-                model_name=model_name,
-                run_id=run_id,
+                model_dir=model_dir,
                 ensemble_folds=ensemble,
                 test_set=test_set,
                 data_params=data_params,
@@ -202,8 +198,7 @@ def main(
         elif task == "classification":
             results_classification(
                 model_class=Roost,
-                model_name=model_name,
-                run_id=run_id,
+                model_dir=model_dir,
                 ensemble_folds=ensemble,
                 test_set=test_set,
                 data_params=data_params,
@@ -389,9 +384,9 @@ def input_parser():
     )
     parser.add_argument(
         "--run-id",
-        default=0,
-        type=int,
-        metavar="INT",
+        default="run_1",
+        type=str,
+        metavar="STR",
         help="Index for model in an ensemble of models",
     )
 

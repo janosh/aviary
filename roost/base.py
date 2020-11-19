@@ -41,8 +41,7 @@ class BaseModel(nn.Module, ABC):
         epochs,
         criterion,
         normalizer,
-        model_name,
-        run_id,
+        model_dir,
         checkpoint=True,
         writer=None,
         verbose=True,
@@ -110,7 +109,7 @@ class BaseModel(nn.Module, ABC):
                     if self.task == "regression":
                         checkpoint_dict.update({"normalizer": normalizer.state_dict()})
 
-                    save_checkpoint(checkpoint_dict, is_best, model_name, run_id)
+                    save_checkpoint(checkpoint_dict, is_best, model_dir)
 
                 if writer is not None:
                     writer.add_scalar("train/loss", t_loss, epoch + 1)

@@ -1,5 +1,4 @@
 import argparse
-import os
 import sys
 
 import torch
@@ -7,8 +6,8 @@ from sklearn.model_selection import train_test_split as split
 
 from roost.cgcnn.data import CrystalGraphData, collate_batch
 from roost.cgcnn.model import CrystalGraphConvNet
-from roost.core import ROOT
 from roost.utils import (
+    make_model_dir,
     results_classification,
     results_regression,
     train_ensemble,
@@ -82,6 +81,8 @@ def main(
             "Transfer option not available for CGCNN in order to stay "
             "faithful to the original implementation."
         )
+
+    model_dir = make_model_dir(model_name, ensemble, run_id)
 
     dist_dict = {
         "max_num_nbr": 12,
@@ -178,13 +179,10 @@ def main(
         "n_hidden": n_hidden,
     }
 
-    os.makedirs(f"{ROOT}/models/{model_name}{'/runs' if log else ''}", exist_ok=True)
-
     if train:
         train_ensemble(
             model_class=CrystalGraphConvNet,
-            model_name=model_name,
-            run_id=run_id,
+            model_dir=model_dir,
             ensemble_folds=ensemble,
             epochs=epochs,
             train_set=train_set,
@@ -210,8 +208,7 @@ def main(
 
         results_func(
             model_class=CrystalGraphConvNet,
-            model_name=model_name,
-            run_id=run_id,
+            model_dir=model_dir,
             ensemble_folds=ensemble,
             test_set=test_set,
             data_params=data_params,
@@ -406,9 +403,9 @@ def input_parser():
     )
     parser.add_argument(
         "--run-id",
-        default=0,
-        type=int,
-        metavar="INT",
+        default="run_1",
+        type=str,
+        metavar="STR",
         help="Index for model in an ensemble of models",
     )
 

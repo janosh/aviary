@@ -1,14 +1,12 @@
 # %%
-import os
 from argparse import ArgumentParser
 
 import torch
 from sklearn.model_selection import train_test_split as split
 
 from roost.core import ROOT
-from roost.roost import CompositionData, Roost
-from roost.roost.utils import collate_batch
-from roost.utils import results_regression, train_ensemble
+from roost.roost import CompositionData, Roost, collate_batch
+from roost.utils import make_model_dir, results_regression, train_ensemble
 
 torch.manual_seed(0)  # ensure reproducible results
 
@@ -48,7 +46,8 @@ flags, _ = parser.parse_known_args()
 
 args = ["model_name", "run_id", "use_mnf", "epochs", "data_path"]
 model_name, run_id, use_mnf, epochs, data_path = [vars(flags).get(x) for x in args]
-data_path = f"{ROOT}/data/datasets/{data_path}"
+
+model_dir = make_model_dir(model_name, ensemble, run_id)
 
 
 # %%
@@ -112,14 +111,10 @@ model_params = {
 }
 
 
-os.makedirs(f"{ROOT}/models/{model_name}{'/runs' if log else ''}", exist_ok=True)
-
-
 # %% Train a Roost model
 train_ensemble(
     model_class=Roost,
-    model_name=model_name,
-    run_id=run_id,
+    model_dir=model_dir,
     ensemble_folds=ensemble,
     epochs=epochs,
     train_set=train_set,
@@ -138,8 +133,7 @@ data_params["shuffle"] = False  # need fixed data order due to ensembling
 
 results_regression(
     model_class=Roost,
-    model_name=model_name,
-    run_id=run_id,
+    model_dir=model_dir,
     ensemble_folds=ensemble,
     test_set=test_set,
     data_params=data_params,

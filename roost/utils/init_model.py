@@ -3,15 +3,14 @@ from os.path import isfile
 import torch
 from torch.nn import CrossEntropyLoss, L1Loss, MSELoss, NLLLoss
 
-from roost.core import ROOT, Normalizer, RobustL1Loss, RobustL2Loss
+from roost.core import Normalizer, RobustL1Loss, RobustL2Loss
 from roost.segments import ResidualNet
 
 
 def init_model(
     model_class,
-    model_name,
+    model_path,
     model_params,
-    run_id,
     loss,
     optim,
     learning_rate,
@@ -27,7 +26,6 @@ def init_model(
     task = model_params["task"]
     robust = model_params["robust"]
     n_targets = model_params["n_targets"]
-    model_path = f"{ROOT}/models/{model_name}/checkpoint-r{run_id}.pth.tar"
 
     if isfile(model_path):
         checkpoint = torch.load(model_path, map_location=device)

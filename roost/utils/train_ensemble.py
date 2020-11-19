@@ -4,14 +4,12 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from roost.core import ROOT
 from roost.utils import init_model
 
 
 def train_ensemble(
     model_class,
-    model_name,
-    run_id,
+    model_dir,
     ensemble_folds,
     epochs,
     train_set,
@@ -37,16 +35,9 @@ def train_ensemble(
     for j in range(ensemble_folds):
         #  this allows us to run ensembles in parallel rather than in series
         #  by specifying the run-id arg.
-        if ensemble_folds == 1:
-            j = run_id
 
         model, criterion, optimizer, scheduler, normalizer = init_model(
-            model_class=model_class,
-            model_name=model_name,
-            model_params=model_params,
-            run_id=j,
-            **setup_params,
-            **restart_params,
+            model_class, model_dir, model_params, **setup_params, **restart_params
         )
 
         if model.task == "regression":
@@ -59,7 +50,7 @@ def train_ensemble(
 
         if log:
             now = f"{datetime.now():%d-%m-%Y_%H-%M-%S}"
-            writer = SummaryWriter(f"{ROOT}/models/{model_name}/runs/r{j}/{now}")
+            writer = SummaryWriter(f"{model_dir}/runs/r{j}/{now}")
         else:
             writer = None
 
@@ -77,20 +68,19 @@ def train_ensemble(
                 if model.task == "regression":
                     val_score = v_metrics["MAE"]
                     print(f"Validation Baseline: MAE {val_score:.3f}\n")
-                elif model.task == "classification":
+                else:  # classification
                     val_score = v_metrics["Acc"]
                     print(f"Validation Baseline: Acc {val_score:.3f}\n")
                 model.best_val_score = val_score
 
         model.fit(
-            train_generator=train_generator,
-            val_generator=val_generator,
-            optimizer=optimizer,
-            scheduler=scheduler,
-            epochs=epochs,
-            criterion=criterion,
-            normalizer=normalizer,
-            model_name=model_name,
-            run_id=j,
+            train_generator,
+            val_generator,
+            optimizer,
+            scheduler,
+            epochs,
+            criterion,
+            normalizer,
+            model_dir,
             writer=writer,
         )

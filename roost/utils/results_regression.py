@@ -6,14 +6,12 @@ import torch
 from sklearn.metrics import r2_score
 from torch.utils.data import DataLoader
 
-from roost import plots
-from roost.core import ROOT, Normalizer
+from roost.core import Normalizer
 
 
 def results_regression(
     model_class,
-    model_name,
-    run_id,
+    model_dir,
     ensemble_folds,
     test_set,
     data_params,
@@ -36,15 +34,13 @@ def results_regression(
     # y_ale only needed if robust is True
     y_ensemble, y_ale = np.zeros([2, ensemble_folds, len(test_set)])
 
-    save_dir = f"{ROOT}/models/{model_name}"
-
-    for j in range(ensemble_folds):
+    for ens in range(ensemble_folds):
 
         if ensemble_folds == 1:
-            checkpoint_path = f"{save_dir}/{eval_type}-r{run_id}.pth.tar"
+            checkpoint_path = f"{model_dir}/{eval_type}.pth.tar"
         else:
-            checkpoint_path = f"{save_dir}/{eval_type}-r{j}.pth.tar"
-            print(f"Evaluating Model {j + 1}/{ensemble_folds}")
+            checkpoint_path = f"{model_dir}/ens_{ens}/{eval_type}.pth.tar"
+            print(f"Evaluating Model {ens + 1}/{ensemble_folds}")
 
         assert isfile(checkpoint_path), f"no checkpoint found at '{checkpoint_path}'"
         checkpoint = torch.load(checkpoint_path, map_location=device)
@@ -75,14 +71,13 @@ def results_regression(
 
             pred = normalizer.denorm(mean).numpy()
             std_al = (log_std_al.exp() * normalizer.std).numpy()
-            y_ale[j, :] = std_al
+            y_ale[ens, :] = std_al
         else:
             if repeat > 1:
                 std_ep = (output.std(-1) * normalizer.std).numpy() * 100
                 output = output.mean(-1)
             pred = normalizer.denorm(output).numpy()
-
-        y_ensemble[j, :] = pred
+        y_ensemble[ens, :] = pred
 
     res = y_ensemble - y_test
     mae = np.abs(res).mean(axis=1)
@@ -132,15 +127,15 @@ def results_regression(
         ale = {f"std_al_{n}": val for (n, val) in enumerate(y_ale)}
         results.update(ale)
     if repeat > 1:
-        results.update({f"std_ep_repeat_{repeat}": std_ep})
+        results.update({"std_ep": std_ep})
     if robust and repeat > 1:
         results.update({"std_tot": (std_ep ** 2 + std_al ** 2) ** 0.5})
 
     df = pd.DataFrame({**core, **results})
 
     if ensemble_folds == 1:
-        df.to_csv(f"{save_dir}/test_results-r{run_id}.csv", index=False)
+        df.to_csv(f"{model_dir}/test_results.csv", index=False)
     else:
-        df.to_csv(f"{save_dir}/ensemble_results-r{run_id}.csv", index=False)
+        df.to_csv(f"{model_dir}/ensemble_results.csv", index=False)
 
     return r2_avg, mae_avg, rmse_avg

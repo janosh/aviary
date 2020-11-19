@@ -4,8 +4,7 @@ import torch
 from sklearn.model_selection import train_test_split as split
 
 from roost.core import ROOT
-from roost.roost.data import CompositionData, collate_batch
-from roost.roost.model import Roost
+from roost.roost import CompositionData, Roost, collate_batch
 from roost.utils import results_regression, train_ensemble
 
 torch.manual_seed(0)  # ensure reproducible results
@@ -37,6 +36,9 @@ def test_single_roost():
     batch_size = 128
     workers = 0
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
+    model_dir = f"{ROOT}/models/{model_name}/{run_id}/"
+    os.makedirs(model_dir, exist_ok=True)
 
     dataset = CompositionData(data_path=data_path, fea_path=fea_path, task=task)
     n_targets = dataset.n_targets
@@ -95,12 +97,9 @@ def test_single_roost():
         "out_hidden": [1024, 512, 256, 128, 64],
     }
 
-    os.makedirs(f"{ROOT}/models/{model_name}{'/runs' if log else ''}", exist_ok=True)
-
     train_ensemble(
         model_class=Roost,
-        model_name=model_name,
-        run_id=run_id,
+        model_dir=model_dir,
         ensemble_folds=ensemble,
         epochs=epochs,
         train_set=train_set,
@@ -117,8 +116,7 @@ def test_single_roost():
 
     r2, mae, rmse = results_regression(
         model_class=Roost,
-        model_name=model_name,
-        run_id=run_id,
+        model_dir=model_dir,
         ensemble_folds=ensemble,
         test_set=test_set,
         data_params=data_params,

@@ -97,9 +97,7 @@ class Normalizer:
 
 
 class Featurizer:
-    """
-    Base class for featurising nodes and edges.
-    """
+    """Base class for featurizing nodes and edges."""
 
     def __init__(self, allowed_types):
         self.allowed_types = set(allowed_types)
@@ -140,16 +138,14 @@ class LoadFeaturizer(Featurizer):
             self._embedding[key] = np.array(value, dtype=float)
 
 
-def save_checkpoint(state, is_best, model_name, run_id):
+def save_checkpoint(state, is_best, model_dir):
     """
-    Saves a checkpoint and overwrites the best model when is_best==True
+    Saves a checkpoint and overwrites the best model when is_best==True.
     """
-    checkpoint = f"{ROOT}/models/{model_name}/checkpoint-r{run_id}.pth.tar"
-    torch.save(state, checkpoint)
+    torch.save(state, f"{model_dir}/checkpoint.pth.tar")
 
     if is_best:
-        best = f"{ROOT}/models/{model_name}/best-r{run_id}.pth.tar"
-        torch.save(state, best)
+        torch.save(state, f"{model_dir}/best.pth.tar")
 
 
 def RobustL1Loss(output, log_std, target):
@@ -166,8 +162,8 @@ def RobustL2Loss(output, log_std, target):
     Robust L2 loss using a gaussian prior. Allows for estimation
     of an aleatoric uncertainty.
     """
-    loss = 0.5 * torch.pow(output - target, 2.0) * torch.exp(-2.0 * log_std) + log_std
-    return torch.mean(loss)
+    loss = 0.5 * (output - target) ** 2 * torch.exp(-2 * log_std) + log_std
+    return loss.mean()
 
 
 def sampled_softmax(pre_logits, log_std, samples=10):
@@ -186,4 +182,4 @@ def sampled_softmax(pre_logits, log_std, samples=10):
         epsilon, sam_std
     )
     logits = softmax(pre_logits, dim=1).view(len(log_std), samples, -1)
-    return torch.mean(logits, dim=1)
+    return logits.mean(dim=1)
