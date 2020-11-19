@@ -1,11 +1,11 @@
 import torch
 from torch import nn
 
-from roost.core import BaseModelClass
+from roost.base import BaseModel
 from roost.segments import ResidualNet, SimpleNet, WeightedAttentionPooling
 
 
-class Roost(BaseModelClass):
+class Roost(BaseModel):
     """
     The Roost model is comprised of a fully connected network
     and message passing graph layers.

@@ -1,17 +1,17 @@
 import torch
 from torch import nn
 
-from roost.core import BaseModelClass
+from roost.base import BaseModel
 from roost.segments import MeanPooling, SimpleNet, SumPooling
 
 
-class CrystalGraphConvNet(BaseModelClass):
+class CrystalGraphConvNet(BaseModel):
     """
     A crystal graph convolutional NN for predicting material properties.
 
     This model is based on: https://github.com/txie-93/cgcnn (MIT License).
     Changes to the code were made to allow for the removal of zero-padding
-    and to benefit from the BaseModelClass functionality. The architectural
+    and to benefit from the BaseModel functionality. The architectural
     choices of the model remain unchanged.
     """
 
