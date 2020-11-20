@@ -7,6 +7,8 @@ from torch import nn
 from torch.nn.functional import softmax
 from tqdm.autonotebook import trange
 
+from roost.utils import interruptable
+
 from .core import (
     AverageMeter,
     ClassificationMetrics,
@@ -32,6 +34,7 @@ class BaseModel(nn.Module, ABC):
         self.best_val_score = best_val_score
         self.model_params = {}
 
+    @interruptable
     def fit(
         self,
         train_generator,
@@ -47,90 +50,83 @@ class BaseModel(nn.Module, ABC):
         verbose=True,
     ):
         start_epoch = self.epoch
-        try:
-            for epoch in range(start_epoch, start_epoch + epochs):
-                self.epoch += 1
-                # Training
-                t_loss, t_metrics = self.evaluate(
-                    generator=train_generator,
-                    criterion=criterion,
-                    optimizer=optimizer,
-                    normalizer=normalizer,
-                    action="train",
-                    verbose=verbose,
+        for epoch in range(start_epoch, start_epoch + epochs):
+            self.epoch += 1
+            # Training
+            t_loss, t_metrics = self.evaluate(
+                generator=train_generator,
+                criterion=criterion,
+                optimizer=optimizer,
+                normalizer=normalizer,
+                action="train",
+                verbose=verbose,
+            )
+
+            if verbose:
+                print(f"Epoch: [{epoch}/{start_epoch + epochs - 1}]")
+                metric_str = "\t".join(
+                    f"{key} {val:.3f}" for key, val in t_metrics.items()
                 )
+                print(f"Train      : Loss {t_loss:.4f}\t{metric_str}")
+
+            # Validation
+            if val_generator is None:
+                is_best = False
+            else:
+                with torch.no_grad():
+                    # evaluate on validation set
+                    v_loss, v_metrics = self.evaluate(
+                        generator=val_generator,
+                        criterion=criterion,
+                        optimizer=None,
+                        normalizer=normalizer,
+                        action="val",
+                    )
 
                 if verbose:
-                    print(f"Epoch: [{epoch}/{start_epoch + epochs - 1}]")
                     metric_str = "\t".join(
-                        f"{key} {val:.3f}" for key, val in t_metrics.items()
+                        f"{key} {val:.3f}" for key, val in v_metrics.items()
                     )
-                    print(f"Train      : Loss {t_loss:.4f}\t{metric_str}")
+                    print(f"Validation : Loss {v_loss:.4f}\t{metric_str}")
 
-                # Validation
-                if val_generator is None:
-                    is_best = False
-                else:
-                    with torch.no_grad():
-                        # evaluate on validation set
-                        v_loss, v_metrics = self.evaluate(
-                            generator=val_generator,
-                            criterion=criterion,
-                            optimizer=None,
-                            normalizer=normalizer,
-                            action="val",
-                        )
+                if self.task == "regression":
+                    val_score = v_metrics["MAE"]
+                    is_best = val_score < self.best_val_score
+                elif self.task == "classification":
+                    val_score = v_metrics["Acc"]
+                    is_best = val_score > self.best_val_score
 
-                    if verbose:
-                        metric_str = "\t".join(
-                            f"{key} {val:.3f}" for key, val in v_metrics.items()
-                        )
-                        print(f"Validation : Loss {v_loss:.4f}\t{metric_str}")
+            if is_best:
+                self.best_val_score = val_score
 
-                    if self.task == "regression":
-                        val_score = v_metrics["MAE"]
-                        is_best = val_score < self.best_val_score
-                    elif self.task == "classification":
-                        val_score = v_metrics["Acc"]
-                        is_best = val_score > self.best_val_score
+            if checkpoint:
+                checkpoint_dict = {
+                    "model_params": self.model_params,
+                    "state_dict": self.state_dict(),
+                    "epoch": self.epoch,
+                    "best_val_score": self.best_val_score,
+                    "optimizer": optimizer.state_dict(),
+                    "scheduler": scheduler.state_dict(),
+                }
+                if self.task == "regression":
+                    checkpoint_dict.update({"normalizer": normalizer.state_dict()})
 
-                if is_best:
-                    self.best_val_score = val_score
+                save_checkpoint(checkpoint_dict, is_best, model_dir)
 
-                if checkpoint:
-                    checkpoint_dict = {
-                        "model_params": self.model_params,
-                        "state_dict": self.state_dict(),
-                        "epoch": self.epoch,
-                        "best_val_score": self.best_val_score,
-                        "optimizer": optimizer.state_dict(),
-                        "scheduler": scheduler.state_dict(),
-                    }
-                    if self.task == "regression":
-                        checkpoint_dict.update({"normalizer": normalizer.state_dict()})
+            if writer is not None:
+                writer.add_scalar("train/loss", t_loss, epoch + 1)
+                for metric, val in t_metrics.items():
+                    writer.add_scalar(f"train/{metric}", val, epoch + 1)
 
-                    save_checkpoint(checkpoint_dict, is_best, model_dir)
+                if val_generator is not None:
+                    writer.add_scalar("validation/loss", v_loss, epoch + 1)
+                    for metric, val in v_metrics.items():
+                        writer.add_scalar(f"validation/{metric}", val, epoch + 1)
 
-                if writer is not None:
-                    writer.add_scalar("train/loss", t_loss, epoch + 1)
-                    for metric, val in t_metrics.items():
-                        writer.add_scalar(f"train/{metric}", val, epoch + 1)
+            scheduler.step()
 
-                    if val_generator is not None:
-                        writer.add_scalar("validation/loss", v_loss, epoch + 1)
-                        for metric, val in v_metrics.items():
-                            writer.add_scalar(f"validation/{metric}", val, epoch + 1)
-
-                scheduler.step()
-
-                # catch memory leak
-                gc.collect()
-
-        except KeyboardInterrupt:
-            pass
-
-        if writer is not None:
-            writer.close()
+            # catch memory leak
+            gc.collect()
 
     def evaluate(
         self, generator, criterion, optimizer, normalizer, action="train", verbose=False

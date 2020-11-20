@@ -1,5 +1,6 @@
 import os
 from functools import wraps
+from typing import Callable
 
 from roost.core import ROOT
 
@@ -25,3 +26,16 @@ def make_model_dir(model_name, ensemble=1, run_id="run_1"):
         os.makedirs(model_dir, exist_ok=True)
 
     return model_dir
+
+
+def interruptable(func: Callable):
+    """Allows gracefully aborting calls to the decorated function with ctrl + c."""
+
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except KeyboardInterrupt:
+            print(f"\nDetected KeyboardInterrupt: Aborting {func.__name__}()")
+
+    return wrapped
