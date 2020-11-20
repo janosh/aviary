@@ -71,7 +71,7 @@ def init_model(
 
     else:
         print("Training a new model from scratch")
-        print(f"Checkpoints will be saved to {model_path}")
+        print(f"Checkpoint will be saved to {model_path}")
         model = model_class(device=device, **model_params)
 
         model.to(device)

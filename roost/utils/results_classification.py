@@ -87,28 +87,29 @@ def results_classification(
             y_test, np.argmax(logits, axis=1), average="weighted"
         )[:3]
 
+    acc_avg = acc.mean()
+    acc_std = acc.std() / np.sqrt(acc.shape[0])
+
+    roc_auc_avg = roc_auc.mean()
+    roc_auc_std = roc_auc.std() / np.sqrt(roc_auc.shape[0])
+
+    precision_avg = precision.mean()
+    precision_std = precision.std() / np.sqrt(precision.shape[0])
+
+    recall_avg = recall.mean()
+    recall_std = recall.std() / np.sqrt(recall.shape[0])
+
+    fscore_avg = fscore.mean()
+    fscore_std = fscore.std() / np.sqrt(fscore.shape[0])
+
     if ensemble_folds == 1:
         print("\nModel Performance Metrics:")
-        print(f"Accuracy : {acc[0]:.4f}")
-        print(f"ROC-AUC  : {roc_auc[0]:.4f}")
-        print(f"Weighted Precision : {precision[0]:.4f}")
-        print(f"Weighted Recall    : {recall[0]:.4f}")
-        print(f"Weighted F-score   : {fscore[0]:.4f}")
+        print(f"Accuracy : {acc_avg:.4f}")
+        print(f"ROC-AUC  : {roc_auc_avg:.4f}")
+        print(f"Weighted Precision : {precision_avg:.4f}")
+        print(f"Weighted Recall    : {recall_avg:.4f}")
+        print(f"Weighted F-score   : {fscore_avg:.4f}")
     else:
-        acc_avg = np.mean(acc)
-        acc_std = np.std(acc) / np.sqrt(acc.shape[0])
-
-        roc_auc_avg = np.mean(roc_auc)
-        roc_auc_std = np.std(roc_auc) / np.sqrt(roc_auc.shape[0])
-
-        precision_avg = np.mean(precision)
-        precision_std = np.std(precision) / np.sqrt(precision.shape[0])
-
-        recall_avg = np.mean(recall)
-        recall_std = np.std(recall) / np.sqrt(recall.shape[0])
-
-        fscore_avg = np.mean(fscore)
-        fscore_std = np.std(fscore) / np.sqrt(fscore.shape[0])
 
         print("\nModel Performance Metrics:")
         print(f"Accuracy : {acc_avg:.4f} +/- {acc_std:.4f}")
@@ -160,3 +161,5 @@ def results_classification(
         df.to_csv(f"{model_dir}/test_results.csv", index=False)
     else:
         df.to_csv(f"{model_dir}/ensemble_results.csv", index=False)
+
+    return acc_avg, roc_auc_avg, precision_avg, recall_avg, fscore_avg

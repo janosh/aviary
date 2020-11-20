@@ -8,8 +8,7 @@ from .message_layer import MessageLayer
 
 class DescriptorNetwork(nn.Module):
     """
-    The Descriptor Network is the message passing section of the
-    Roost Model.
+    The Descriptor Network is the message passing section of the Roost Model.
     """
 
     def __init__(
@@ -29,7 +28,6 @@ class DescriptorNetwork(nn.Module):
         # apply linear transform to the input to get a trainable embedding
         # NOTE -1 here so we can add the weights as a node feature
         self.embedding = nn.Linear(elem_emb_len, elem_fea_len - 1)
-        # self.embedding = nn.Linear(elem_emb_len, elem_fea_len)
 
         # create a list of Message passing layers
         graph_layers = [
@@ -92,7 +90,6 @@ class DescriptorNetwork(nn.Module):
         for attnhead in self.cry_pool:
             head_fea.append(
                 attnhead(elem_fea, index=cry_elem_idx, weights=elem_weights)
-                # attnhead(elem_fea, index=cry_elem_idx)
             )
 
         return torch.stack(head_fea).mean(dim=0)

@@ -17,7 +17,6 @@ def train_ensemble(
     log,
     data_params,
     setup_params,
-    restart_params,
     model_params,
 ):
     """
@@ -33,11 +32,9 @@ def train_ensemble(
         val_generator = None
 
     for j in range(ensemble_folds):
-        #  this allows us to run ensembles in parallel rather than in series
-        #  by specifying the run-id arg.
 
         model, criterion, optimizer, scheduler, normalizer = init_model(
-            model_class, model_dir, model_params, **setup_params, **restart_params
+            model_class, model_dir, model_params, **setup_params
         )
 
         if model.task == "regression":

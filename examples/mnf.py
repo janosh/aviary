@@ -86,9 +86,6 @@ setup_params = {
     "weight_decay": weight_decay,
     "momentum": momentum,
     "device": device,
-}
-
-restart_params = {
     "fine_tune": fine_tune,
     "transfer": transfer,
 }
@@ -122,7 +119,6 @@ train_ensemble(
     log=log,
     data_params=data_params,
     setup_params=setup_params,
-    restart_params=restart_params,
     model_params=model_params,
 )
 
