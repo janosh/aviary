@@ -1,3 +1,4 @@
+# don't name this file roost.py as it will shadow the roost package/folder itself
 import argparse
 import sys
 
@@ -184,28 +185,19 @@ def main(
         }
         data_params.update(data_reset)
 
-        if task == "regression":
-            results_regression(
-                model_class=Roost,
-                model_dir=model_dir,
-                ensemble_folds=ensemble,
-                test_set=test_set,
-                data_params=data_params,
-                robust=robust,
-                device=device,
-                eval_type="checkpoint",
-            )
-        elif task == "classification":
-            results_classification(
-                model_class=Roost,
-                model_dir=model_dir,
-                ensemble_folds=ensemble,
-                test_set=test_set,
-                data_params=data_params,
-                robust=robust,
-                device=device,
-                eval_type="checkpoint",
-            )
+        results_func = (
+            results_regression if task == "regression" else results_classification
+        )
+        results_func(
+            model_class=Roost,
+            model_dir=model_dir,
+            ensemble_folds=ensemble,
+            test_set=test_set,
+            data_params=data_params,
+            robust=robust,
+            device=device,
+            eval_type="checkpoint",
+        )
 
 
 def input_parser():
