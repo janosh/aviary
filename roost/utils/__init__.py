@@ -7,7 +7,7 @@ from roost.core import ROOT
 from .init_model import init_model
 from .results_classification import results_classification
 from .results_regression import results_regression
-from .train_ensemble import train_ensemble
+from .train_model import train_ensemble, train_single
 
 
 def make_model_dir(model_name, ensemble=1, run_id="run_1"):

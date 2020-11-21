@@ -21,7 +21,7 @@ def results_classification(
     test_set,
     data_params,
     robust,
-    device,
+    device=torch.device("cpu"),
     eval_type="checkpoint",
 ):
     """
