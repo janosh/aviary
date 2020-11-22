@@ -1,10 +1,10 @@
 # don't name this file roost.py as it will shadow the roost package/folder itself
 import argparse
-import sys
 
 import torch
 from sklearn.model_selection import train_test_split as split
 
+from examples.common_cli_args import add_common_args
 from roost.roost import CompositionData, Roost, collate_batch
 from roost.utils import (
     make_model_dir,
@@ -43,16 +43,12 @@ def main(
     weight_decay=1e-6,
     batch_size=128,
     workers=0,
-    device=torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu"),
+    device=torch.device("cpu"),
     **kwargs,
 ):
     assert (
         evaluate or train
     ), "No task given - Set at least one of 'train' or 'evaluate' kwargs as True"
-    assert task in [
-        "regression",
-        "classification",
-    ], "Only 'regression' or 'classification' allowed for 'task'"
 
     if test_path:
         test_size = 0.0
@@ -202,9 +198,16 @@ def input_parser():
     """
     parser = argparse.ArgumentParser(
         description=(
-            "Roost - a Structure Agnostic Message Passing "
-            "Neural Network for Inorganic Materials"
+            "Roost - a structure-agnostic message-passing "
+            "neural network for inorganic materials"
         )
+    )
+    parser.add_argument(
+        "--model-name",
+        type=str,
+        default="roost",
+        metavar="STR",
+        help="Name for sub-directory where models will be stored",
     )
 
     # data inputs
@@ -214,31 +217,6 @@ def input_parser():
         default="data/datasets/expt-non-metals.csv",
         metavar="PATH",
         help="Path to main data set/training set",
-    )
-    valid_group = parser.add_mutually_exclusive_group()
-    valid_group.add_argument(
-        "--val-path",
-        type=str,
-        metavar="PATH",
-        help="Path to independent validation set",
-    )
-    valid_group.add_argument(
-        "--val-size",
-        default=0.0,
-        type=float,
-        metavar="FLOAT",
-        help="Proportion of data used for validation",
-    )
-    test_group = parser.add_mutually_exclusive_group()
-    test_group.add_argument(
-        "--test-path", type=str, metavar="PATH", help="Path to independent test set"
-    )
-    test_group.add_argument(
-        "--test-size",
-        default=0.2,
-        type=float,
-        metavar="FLOAT",
-        help="Proportion of data set for testing",
     )
 
     # data embeddings
@@ -250,95 +228,7 @@ def input_parser():
         help="Element embedding feature path",
     )
 
-    # dataloader inputs
-    parser.add_argument(
-        "--workers",
-        default=0,
-        type=int,
-        metavar="INT",
-        help="Number of data loading workers (default: 0)",
-    )
-    parser.add_argument(
-        "--batch-size",
-        "--bsize",
-        default=128,
-        type=int,
-        metavar="INT",
-        help="Mini-batch size (default: 128)",
-    )
-    parser.add_argument(
-        "--data-seed",
-        default=0,
-        type=int,
-        metavar="INT",
-        help="Seed used when splitting data sets (default: 0)",
-    )
-    parser.add_argument(
-        "--sample",
-        default=1,
-        type=int,
-        metavar="INT",
-        help="Sub-sample the training set for learning curves",
-    )
-
-    # optimiser inputs
-    parser.add_argument(
-        "--epochs",
-        default=100,
-        type=int,
-        metavar="INT",
-        help="Number of training epochs to run (default: 100)",
-    )
-    parser.add_argument(
-        "--loss",
-        default="L1",
-        type=str,
-        metavar="STR",
-        help="Loss function if regression (default: 'L1')",
-    )
-    parser.add_argument(
-        "--robust",
-        action="store_true",
-        help="Specifies whether to use hetroskedastic loss variants",
-    )
-    parser.add_argument(
-        "--optim",
-        default="AdamW",
-        type=str,
-        metavar="STR",
-        help="Optimizer used for training (default: 'AdamW')",
-    )
-    parser.add_argument(
-        "--learning-rate",
-        "--lr",
-        default=3e-4,
-        type=float,
-        metavar="FLOAT",
-        help="Initial learning rate (default: 3e-4)",
-    )
-    parser.add_argument(
-        "--momentum",
-        default=0.9,
-        type=float,
-        metavar="FLOAT [0,1]",
-        help="Optimizer momentum (default: 0.9)",
-    )
-    parser.add_argument(
-        "--weight-decay",
-        default=1e-6,
-        type=float,
-        metavar="FLOAT [0,1]",
-        help="Optimizer weight decay (default: 1e-6)",
-    )
-
     # graph inputs
-    parser.add_argument(
-        "--elem-fea-len",
-        default=64,
-        type=int,
-        metavar="INT",
-        help="Number of hidden features for elements (default: 64)",
-    )
     parser.add_argument(
         "--n-graph",
         default=3,
@@ -346,88 +236,15 @@ def input_parser():
         metavar="INT",
         help="Number of message passing layers (default: 3)",
     )
-
-    # ensemble inputs
     parser.add_argument(
-        "--ensemble",
-        default=1,
+        "--elem-fea-len",
+        default=64,
         type=int,
         metavar="INT",
-        help="Number models to ensemble",
-    )
-    name_group = parser.add_mutually_exclusive_group()
-    name_group.add_argument(
-        "--model-name",
-        type=str,
-        default=None,
-        metavar="STR",
-        help="Name for sub-directory where models will be stored",
-    )
-    name_group.add_argument(
-        "--data-id",
-        default="roost",
-        type=str,
-        metavar="STR",
-        help="Partial identifier for sub-directory where models will be stored",
-    )
-    parser.add_argument(
-        "--run-id",
-        default="run_1",
-        type=str,
-        metavar="STR",
-        help="Index for model in an ensemble of models",
+        help="Number of hidden features for elements (default: 64)",
     )
 
-    # restart inputs
-    use_group = parser.add_mutually_exclusive_group()
-    use_group.add_argument(
-        "--fine-tune", type=str, metavar="PATH", help="Checkpoint path for fine tuning"
-    )
-    use_group.add_argument(
-        "--transfer",
-        type=str,
-        metavar="PATH",
-        help="Checkpoint path for transfer learning",
-    )
-
-    # task type
-    task_group = parser.add_mutually_exclusive_group()
-    task_group.add_argument(
-        "--classification", action="store_true", help="Specifies a classification task"
-    )
-    task_group.add_argument(
-        "--regression", action="store_true", help="Specifies a regression task"
-    )
-    parser.add_argument(
-        "--evaluate",
-        action="store_true",
-        help="Evaluate the model/ensemble",
-    )
-    parser.add_argument("--train", action="store_true", help="Train the model/ensemble")
-
-    # misc
-    parser.add_argument("--disable-cuda", action="store_true", help="Disable CUDA")
-    parser.add_argument(
-        "--log", action="store_true", help="Log training metrics to tensorboard"
-    )
-
-    args = parser.parse_args(sys.argv[1:])
-
-    if args.model_name is None:
-        args.model_name = f"{args.data_id}_s-{args.data_seed}_t-{args.sample}"
-
-    if args.classification:
-        args.task = "classification"
-    else:
-        args.task = "regression"
-
-    args.device = (
-        torch.device("cuda")
-        if (not args.disable_cuda) and torch.cuda.is_available()
-        else torch.device("cpu")
-    )
-
-    return args
+    return add_common_args(parser)
 
 
 if __name__ == "__main__":
