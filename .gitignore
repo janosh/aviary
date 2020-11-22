@@ -8,3 +8,4 @@ __pycache__
 **/wren*
 # CGCNN cache files
 data/datasets/cache
+data/datasets/large
