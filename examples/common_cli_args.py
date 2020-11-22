@@ -10,16 +10,15 @@ def add_common_args(parser):
     add_restart_args(parser)
     add_task_args(parser)
 
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
 
     task_err = f"task must be regression or classification, got {args.task}"
     assert args.task in ["regression", "classification"], task_err
 
-    args.device = (
-        torch.device("cuda")
-        if torch.cuda.is_available() and (not args.disable_cuda)
-        else torch.device("cpu")
-    )
+    if torch.cuda.is_available() and (not args.disable_cuda):
+        args.device = torch.device("cuda")
+    else:
+        args.device = torch.device("cpu")
 
     return args
 
