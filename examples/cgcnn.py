@@ -28,7 +28,8 @@ def main(
     run_id=1,
     data_seed=42,
     epochs=100,
-    log=True,
+    log=False,  # write tensorboard logs
+    verbose=False,  # print CLI flags and show TQDM training progress
     sample=1,
     test_size=0.2,
     test_path=None,
@@ -180,6 +181,7 @@ def main(
             train_set=train_set,
             val_set=val_set,
             log=log,
+            verbose=verbose,
             data_params=data_params,
             setup_params=setup_params,
             model_params=model_params,

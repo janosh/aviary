@@ -27,6 +27,7 @@ common_args = [
     "train",
     "disable_cuda",
     "log",
+    "verbose",
 ]
 
 

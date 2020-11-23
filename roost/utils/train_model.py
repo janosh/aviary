@@ -14,6 +14,7 @@ def train_single(
     train_set,
     val_set,
     log,
+    verbose,
     data_params,
     setup_params,
     model_params,
@@ -55,7 +56,7 @@ def train_single(
                 optimizer=None,
                 normalizer=normalizer,
                 action="val",
-                verbose=True,
+                verbose=verbose,
             )
             if model.task == "regression":
                 val_score = v_metrics["MAE"]
@@ -75,6 +76,7 @@ def train_single(
         normalizer,
         model_dir,
         writer=writer,
+        verbose=verbose,
     )
 
 

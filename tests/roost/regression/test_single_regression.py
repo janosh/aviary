@@ -18,6 +18,7 @@ def test_single_roost_regression_robust():
         train_set=train_set,
         val_set=test_set,
         log=False,
+        verbose=False,
         data_params=data_params_train,
         setup_params=setup_params,
         model_params=model_params,

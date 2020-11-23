@@ -20,6 +20,11 @@ def add_common_args(parser):
     else:
         args.device = torch.device("cpu")
 
+    if args.verbose:
+        print("full set of CLI args used:")
+        for key, val in vars(args).items():
+            print(f"  - {key} = {val}")
+
     return args
 
 
@@ -183,4 +188,9 @@ def add_task_args(parser):
     parser.add_argument("--disable-cuda", action="store_true", help="Disable CUDA")
     parser.add_argument(
         "--log", action="store_true", help="Log training metrics to tensorboard"
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Whether to print training and evaluation progress",
     )
