@@ -5,6 +5,7 @@ from typing import Callable
 from roost.core import ROOT
 
 from .init_model import init_model
+from .mat_proj import API_KEY, fetch_mp
 from .results_classification import results_classification
 from .results_regression import results_regression
 from .train_model import train_ensemble, train_single
