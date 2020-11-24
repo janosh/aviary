@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.interpolate import interpn
 
 
 def get_err_decay(y_test, y_pred, y_std, n_rand=50):
@@ -21,7 +20,8 @@ def get_err_decay(y_test, y_pred, y_std, n_rand=50):
 
 
 def err_decay(y_test, y_pred, y_std, title=None, n_rand=50):
-    """Plot for assessing the quality of uncertainty estimates. If a model's
+    """
+    Plot for assessing the quality of uncertainty estimates. If a model's
     uncertainty is well calibrated, i.e. strongly correlated with its error,
     removing the most uncertain predictions should make the mean error decay
     similarly to how it decays when removing the predictions of largest error
@@ -47,32 +47,3 @@ def err_decay(y_test, y_pred, y_std, title=None, n_rand=50):
     fig = plt.gcf()
     plt.show()
     return fig
-
-
-def density_scatter(
-    x, y, ax=None, colours=None, label=None, sort=True, log=True, bins=100, **kwargs
-):
-    """Scatter plot colored by 2d histogram"""
-    if ax is None:
-        _, ax = plt.subplots()
-
-    data, x_e, y_e = np.histogram2d(x, y, bins=bins)
-
-    z = interpn(
-        (0.5 * (x_e[1:] + x_e[:-1]), 0.5 * (y_e[1:] + y_e[:-1])),
-        data,
-        np.vstack([x, y]).T,
-        method="splinef2d",
-        bounds_error=False,
-    )
-
-    # Sort the points by density, so that the densest points are plotted last
-    if sort:
-        idx = z.argsort()
-        x, y, z = x[idx], y[idx], z[idx]
-
-    if log:
-        z = np.log(z)
-
-    ax.scatter(x, y, c=z, cmap=colours or plt.get_cmap("Blues"), label=label, **kwargs)
-    return ax
