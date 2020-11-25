@@ -1,6 +1,7 @@
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from scipy.interpolate import interpn
 from sklearn.linear_model import HuberRegressor
 from sklearn.metrics import r2_score
@@ -103,3 +104,51 @@ def density_scatter_with_hists(targets, preds, fig, spec, title=None):
         (0.045, 0.7),
         xycoords="axes fraction",
     )
+
+
+def pred_target_hex_scatter(targets, preds, title, text=None, color_by=None):
+    fig = plt.figure(figsize=(8, 8))
+
+    gs = fig.add_gridspec(
+        2,
+        2,
+        width_ratios=(9, 2),
+        height_ratios=(2, 9),
+        left=0.15,
+        right=0.95,
+        bottom=0.15,
+        top=0.95,
+        wspace=0.0,
+        hspace=0.0,
+    )
+
+    ax_scatter = fig.add_subplot(gs[1, 0])
+    ax_histx = fig.add_subplot(gs[0, 0], sharex=ax_scatter)
+    ax_histy = fig.add_subplot(gs[1, 1], sharey=ax_scatter)
+
+    # the scatter plot
+    hexbin = ax_scatter.hexbin(
+        targets, preds, gridsize=75, mincnt=1, bins="log", C=color_by
+    )
+    cb_ax = inset_axes(ax_scatter, width="3%", height="70%", loc=4)
+    plt.colorbar(hexbin, cax=cb_ax)
+    cb_ax.yaxis.set_ticks_position("left")
+
+    ax_scatter.set_xlabel("Target Value / eV")
+    ax_scatter.set_ylabel("Predicted Value / eV")
+
+    ax_scatter.set_xlim(np.array(ax_scatter.get_xlim()) * 0.95)
+    ax_scatter.set_ylim(np.array(ax_scatter.get_xlim()) * 0.95)
+
+    ax_histx.hist(targets, bins=50)
+    ax_histy.hist(preds, bins=50, orientation="horizontal")
+
+    ax_histx.axis("off")
+    ax_histy.axis("off")
+
+    ax_scatter.legend(title=title, frameon=False, loc="upper left")
+
+    if text:
+        ax_scatter.annotate(text, (0.04, 0.8), xycoords="axes fraction")
+
+    return fig

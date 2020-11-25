@@ -10,6 +10,7 @@ from roost.base import ROOT
 from roost.plots import (
     count_elements,
     density_scatter_with_hists,
+    pred_target_hex_scatter,
     ptable_elemental_prevalence,
 )
 
@@ -143,3 +144,19 @@ relative_counts = high_err_counts / low_err_counts
 ptable_elemental_prevalence(elem_counts=relative_counts)
 plt.savefig(f"{ROOT}/models/mp-subset/relative_ptable_count_by_err.png")
 
+
+# %%
+targets, preds = total[["target", "pred_0"]].values.T
+
+res = preds - targets
+mae = np.abs(res).mean()
+rmse = np.sqrt(np.square(res).mean())
+r2 = r2_score(targets, preds)
+
+
+# %%
+title = r"$\bf{Model: Wren}$"
+text = f"R2 = {r2:.4f}\nMAE = {mae:.4f}\nRMSE = {rmse:.4f}"
+pred_target_hex_scatter(targets, preds, title, text, color_by=total.volume)
+
+plt.savefig(f"{ROOT}/models/mp-subset/hex-pred-vs-target-color-by-volume-log-mean.png")
