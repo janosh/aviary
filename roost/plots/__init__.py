@@ -1,3 +1,4 @@
+from .cumulative import add_dropdown, cum_err, cum_err_cum_res, cum_res
 from .density_scatter import (
     density_scatter,
     density_scatter_hex,

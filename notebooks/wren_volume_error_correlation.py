@@ -8,6 +8,7 @@ from sklearn.metrics import r2_score
 from roost.base import ROOT
 from roost.plots import (
     count_elements,
+    cum_err_cum_res,
     density_scatter_hex_with_hist,
     density_scatter_with_hist,
     ptable_elemental_prevalence,
@@ -164,9 +165,15 @@ title = r"$\bf{Model: Wren}$"
 density_scatter_hex_with_hist(
     targets,
     preds,
-    title=r"$\bf{Model: Wren}$",
+    title=title,
     text=f"R2 = {r2:.4f}\nMAE = {mae:.4f}\nRMSE = {rmse:.4f}",
     color_by=total.volume,
 )
 
 plt.savefig(f"{ROOT}/models/mp-subset/hex-pred-vs-target-color-by-volume-log-mean.png")
+
+
+# %%
+cum_err_cum_res(targets, preds, [title])
+
+plt.savefig(f"{ROOT}/models/mp-subset/cum_err_cum_res.png")
