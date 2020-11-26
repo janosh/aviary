@@ -1,7 +1,8 @@
 from .density_scatter import (
     density_scatter,
-    density_scatter_with_hists,
-    pred_target_hex_scatter,
+    density_scatter_hex,
+    density_scatter_hex_with_hist,
+    density_scatter_with_hist,
 )
 from .err_decay import err_decay
 from .ptable import (

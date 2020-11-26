@@ -1,4 +1,4 @@
-# RooSt &nbsp; [![Tests](https://github.com/janosh/roost/workflows/Tests/badge.svg)](https://github.com/janosh/roost/actions)
+# RooSt &nbsp; [![Tests](https://github.com/janosh/roost/workflows/Tests/badge.svg)](https://github.com/janosh/roost/actions) [![License](https://img.shields.io/github/license/janosh/roost?label=License)](/license) ![GitHub Repo Size](https://img.shields.io/github/repo-size/janosh/roost?label=Repo+Size) ![GitHub last commit](https://img.shields.io/github/last-commit/janosh/roost?label=Last+Commit)
 
 **R**epresentati**o**n Learning fr**o**m **St**oichiometry
 

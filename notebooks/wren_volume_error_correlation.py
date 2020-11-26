@@ -1,6 +1,5 @@
 # %%
 import matplotlib as mpl
-import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,8 +8,8 @@ from sklearn.metrics import r2_score
 from roost.base import ROOT
 from roost.plots import (
     count_elements,
-    density_scatter_with_hists,
-    pred_target_hex_scatter,
+    density_scatter_hex_with_hist,
+    density_scatter_with_hist,
     ptable_elemental_prevalence,
 )
 
@@ -24,24 +23,29 @@ log_color_scale = mpl.colors.LogNorm()
 # %% data paths
 df_path = lambda idx: f"{ROOT}/models/mp-subset/ens_{idx}/test_results.csv"
 
-dfs = {"Ens 0": df_path(0), "Ens 1": df_path(1), "Ens 2": df_path(2)}
+dfs = [pd.read_csv(df_path(idx), comment="#", na_filter=False) for idx in range(3)]
 
 
-# %% scatter plots
-fig = plt.figure(figsize=(20, 7))
-outer = gridspec.GridSpec(
-    1, 3, wspace=0.25, hspace=0.15, left=0.10, right=0.95, bottom=0.15, top=0.99
-)
+# %%
+fig = plt.figure(figsize=(21, 7))
+outer_grid = fig.add_gridspec(1, 3)
+for df, cell in zip(dfs, outer_grid):
 
-for i, (title, file_path) in enumerate(dfs.items()):
-    df = pd.read_csv(file_path, comment="#", na_filter=False)
+    res = df.pred_0 - df.target
+    mae = np.abs(res).mean()
+    rmse = ((res ** 2).mean()) ** 0.5
+    r2 = r2_score(df.target, df.pred_0)
 
-    targets = df["target"].to_numpy()
+    density_scatter_with_hist(
+        df.target,
+        df.pred_0,
+        cell,
+        xlabel="Target Enthalpy [eV/atom]",
+        ylabel="Predicted Enthalpy [eV/atom]",
+        text=f"R2 = {r2:.4f}\nMAE = {mae:.4f}\nRMSE = {rmse:.4f}",
+    )
 
-    pred_cols = [col for col in df.columns if "pred" in col]
-    preds = df[pred_cols].to_numpy().T
-    density_scatter_with_hists(targets, preds, fig, outer[i])
-    plt.savefig(f"{ROOT}/models/mp-subset/pred-test-multi-wren.png")
+plt.savefig(f"{ROOT}/models/mp-subset/density-scatter.png")
 
 
 # %%
@@ -153,10 +157,16 @@ mae = np.abs(res).mean()
 rmse = np.sqrt(np.square(res).mean())
 r2 = r2_score(targets, preds)
 
+title = r"$\bf{Model: Wren}$"
+
 
 # %%
-title = r"$\bf{Model: Wren}$"
-text = f"R2 = {r2:.4f}\nMAE = {mae:.4f}\nRMSE = {rmse:.4f}"
-pred_target_hex_scatter(targets, preds, title, text, color_by=total.volume)
+density_scatter_hex_with_hist(
+    targets,
+    preds,
+    title=r"$\bf{Model: Wren}$",
+    text=f"R2 = {r2:.4f}\nMAE = {mae:.4f}\nRMSE = {rmse:.4f}",
+    color_by=total.volume,
+)
 
 plt.savefig(f"{ROOT}/models/mp-subset/hex-pred-vs-target-color-by-volume-log-mean.png")
