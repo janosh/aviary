@@ -1,50 +1,19 @@
 import ast
-import functools
 import os
 import pickle
+from functools import lru_cache
 
 import numpy as np
 import pandas as pd
 import torch
-from pymatgen.core.structure import Structure
+from pymatgen import Structure
 from torch.utils.data import Dataset
 
 from roost.core import LoadFeaturizer
 
 
 class CrystalGraphData(Dataset):
-    """
-    The CIFData dataset is a wrapper for a dataset where the crystal structures
-    are stored in the form of CIF files. The dataset should have the following
-    directory structure:
-
-    Parameters
-    ----------
-
-    data_path: str
-            The path to the dataset
-    fea_path: str
-            The path to the element embedding
-    max_num_nbr: int
-            The maximum number of neighbors while constructing the crystal graph
-    radius: float
-            The cutoff radius for searching neighbors
-    dmin: float
-            The minimum distance for constructing GaussianDistance
-    step: float
-            The step size for constructing GaussianDistance
-
-    Returns
-    -------
-
-    atom_fea: torch.Tensor shape (n_i, atom_fea_len)
-    nbr_fea: torch.Tensor shape (n_i, M, nbr_fea_len)
-    self_fea_idx: torch.LongTensor shape (n_i, M)
-    nbr_fea_idx: torch.LongTensor shape (n_i, M)
-    target: torch.Tensor shape (1, )
-    comp: str
-    cif_id: str or int
-    """
+    """Dataset wrapper for crystal structure data in CIF format."""
 
     def __init__(
         self,
@@ -57,17 +26,32 @@ class CrystalGraphData(Dataset):
         step=0.2,
         use_cache=True,
     ):
-        assert os.path.exists(data_path), f"{data_path} does not exist!"
+        """
+        Args:
+            data_path (str): The path to the dataset
+            fea_path (str): The path to the element embedding
+            task (str): "regression" or "classification"
+            max_num_nbr (int, optional): The maximum number of neighbors while
+                constructing the crystal graph. Defaults to 12.
+            radius (int, optional): The cutoff radius for searching neighbors.
+                Defaults to 8.
+            dmin (int, optional): The minimum distance for constructing
+                GaussianDistance. Defaults to 0.
+            step (float, optional): The step size for constructing GaussianDistance.
+                Defaults to 0.2.
+            use_cache (bool, optional): [description]. Defaults to True.
+        """
+        assert os.path.exists(data_path), f"'{data_path}' does not exist!"
         # NOTE this naming structure might lead to clashes where the model
         # loads the wrong graph from the cache.
         self.use_cache = use_cache
-        if self.use_cache:
+        if use_cache:
             self.cachedir = os.path.join(os.path.dirname(data_path), "cache")
             os.makedirs(self.cachedir, exist_ok=True)
 
-        # NOTE make sure to use dense datasets, here do not use the default na
-        # as they can clash with "NaN" which is a valid material
-        self.df = pd.read_csv(data_path, keep_default_na=False, na_values=[])
+        # NOTE make sure to use dense datasets
+        # disable NaN filtering as it clashes with "NaN" which is a valid material
+        self.df = pd.read_csv(data_path, na_filter=False)
 
         assert os.path.exists(fea_path), f"{fea_path} does not exist!"
         self.ari = LoadFeaturizer(fea_path)
@@ -83,33 +67,38 @@ class CrystalGraphData(Dataset):
         self.n_targets = 1
 
     def __len__(self):
-        # return len(self.id_prop_data)
         return len(self.df)
 
-    @functools.lru_cache(maxsize=None)  # Cache loaded structures
+    @lru_cache(maxsize=None)  # Cache loaded structures
     def __getitem__(self, idx):
-        # NOTE sites must be given in fractional co-ordinates
+        """
+        Returns:
+            atom_fea: torch.Tensor(n_i, atom_fea_len)
+            nbr_fea: torch.Tensor(n_i, M, nbr_fea_len)
+            self_fea_idx: torch.LongTensor(n_i, M)
+            nbr_fea_idx: torch.LongTensor(n_i, M)
+            target: torch.Tensor(1)
+            comp: str
+            cif_id: str or int
+        """
+        # NOTE sites must be given in fractional coordinates
         cif_id, comp, target, cell, sites = self.df.iloc[idx]
         cif_id = str(cif_id)
 
-        if self.use_cache:
-            cache_path = os.path.join(self.cachedir, cif_id + ".pkl")
+        cache_path = os.path.join(self.cachedir, cif_id + ".pkl")
 
         if self.use_cache and os.path.exists(cache_path):
             with open(cache_path, "rb") as f:
                 try:
                     pkl_data = pickle.load(f)
                 except EOFError:
-                    raise EOFError(f"Check {f} for issue")
-            atom_fea = pkl_data[0]
-            nbr_fea = pkl_data[1]
-            self_fea_idx = pkl_data[2]
-            nbr_fea_idx = pkl_data[3]
+                    raise EOFError(f"Check '{f}' for issues")
+            atom_fea, nbr_fea, self_fea_idx, nbr_fea_idx = pkl_data
 
         else:
             cell, elems, coords = parse_cgcnn(cell, sites)
-            # NOTE getting primative structure before constructing graph
-            # significantly harms the performnace of this model.
+            # NOTE getting primitive structure before constructing graph
+            # significantly harms the performance of this model.
             crystal = Structure(
                 lattice=cell, species=elems, coords=coords, to_unit_cell=True
             )
@@ -117,14 +106,14 @@ class CrystalGraphData(Dataset):
             # atom features
             atom_fea = [atom.specie.symbol for atom in crystal]
 
-            # neighbours
+            # neighbors
             all_nbrs = crystal.get_all_neighbors(self.radius, include_index=True)
             all_nbrs = [sorted(nbrs, key=lambda x: x[1]) for nbrs in all_nbrs]
             self_fea_idx, nbr_fea_idx, nbr_fea = [], [], []
 
             for i, nbr in enumerate(all_nbrs):
                 # NOTE due to using a geometric learning library we do not
-                # need to set a maximum number of neighbours but do so in
+                # need to set a maximum number of neighbors but do so in
                 # order to replicate the original code.
                 if len(nbr) < self.max_num_nbr:
                     nbr_fea_idx.extend([x[2] for x in nbr])
@@ -247,10 +236,8 @@ def collate_batch(dataset_list):
     batch_comps = []
     batch_cif_ids = []
     base_idx = 0
-    for (
-        i,
-        ((atom_fea, nbr_fea, self_fea_idx, nbr_fea_idx), target, comp, cif_id),
-    ) in enumerate(dataset_list):
+    for (i, data) in enumerate(dataset_list):
+        (atom_fea, nbr_fea, self_fea_idx, nbr_fea_idx), target, comp, cif_id = data
 
         n_i = atom_fea.shape[0]  # number of atoms for this crystal
 
