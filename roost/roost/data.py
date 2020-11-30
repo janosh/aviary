@@ -4,11 +4,10 @@ from os.path import exists
 import numpy as np
 import pandas as pd
 import torch
+from pymatgen import Composition
 from torch.utils.data import Dataset
 
 from roost.core import LoadFeaturizer
-
-from .utils import parse_roost
 
 
 class CompositionData(Dataset):
@@ -63,7 +62,10 @@ class CompositionData(Dataset):
             input id for the material
         """
         cry_id, composition, target = self.df.iloc[idx]
-        elements, weights = parse_roost(composition)
+
+        # get_el_amt_dict: get element symbol and (unreduced) amount e.g. {Fe: 4, O: 6}
+        elements, weights = zip(*Composition(composition).get_el_amt_dict().items())
+
         weights = np.atleast_2d(weights).T / np.sum(weights)
         assert len(elements) != 1, f"cry-id {cry_id} [{composition}] is a pure system"
         try:
