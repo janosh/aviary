@@ -1,21 +1,23 @@
-from shutil import rmtree
-
-from roost.roost import Roost
+from roost.roost import CompositionData, Roost, collate_batch
 from roost.utils import (
     make_model_dir,
     results_regression,
     train_ensemble,
     train_single,
 )
-from tests import data_params_test
-from tests.roost import get_params_data
+from tests import get_params
 
 
 def test_roost_regression_robust():
 
-    train_kwargs, test_set = get_params_data("regression", "expt-non-metals.csv")
+    task = "regression"
+    data_file = "expt-non-metals.csv"
+    emb_file = "matscholar-embedding.json"
 
-    model_name = "test_roost_regression_robust"
+    train_kwargs, data_params, test_set = get_params(
+        Roost, task, CompositionData, collate_batch, data_file, emb_file
+    )
+    model_name = "tests/test_roost_regression_robust"
     model_dir = make_model_dir(model_name)
     train_kwargs["model_dir"] = model_dir
 
@@ -30,7 +32,7 @@ def test_roost_regression_robust():
         model_dir=model_dir,
         ensemble_folds=1,
         test_set=test_set,
-        data_params=data_params_test,
+        data_params=data_params,
         robust=True,
     )
 
@@ -39,7 +41,5 @@ def test_roost_regression_robust():
     # - MAE: 1.0700
     # - RMSE: 1.5290
     assert r2 > -0.1
-    assert mae < 1.1
+    assert mae < 1.15
     assert rmse < 1.6
-
-    rmtree(model_dir)

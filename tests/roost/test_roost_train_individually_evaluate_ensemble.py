@@ -1,17 +1,21 @@
-from shutil import rmtree
-
-from roost.roost import Roost
+from roost.roost import CompositionData, Roost, collate_batch
 from roost.utils import make_model_dir, results_regression, train_single
-from tests import data_params_test
-from tests.roost import get_params_data
+from tests import get_params
 
 
 def test_train_individually_evaluate_ensemble():
     """Test training multiple models individually but evaluating them as ensemble.
     Simulates faster method of training models in parallel on HPC architectures.
     """
-    train_kwargs, test_set = get_params_data("regression", "expt-non-metals.csv")
-    model_name = "test_single_roost_regression_robust"
+
+    task = "regression"
+    data_file = "expt-non-metals.csv"
+    emb_file = "matscholar-embedding.json"
+
+    train_kwargs, data_params, test_set = get_params(
+        Roost, task, CompositionData, collate_batch, data_file, emb_file
+    )
+    model_name = "tests/test_single_roost_regression_robust"
     model_dir = make_model_dir(model_name, ensemble=2)
 
     for run_id in ["ens_0", "ens_1"]:
@@ -22,7 +26,7 @@ def test_train_individually_evaluate_ensemble():
         model_dir=model_dir,
         ensemble_folds=2,
         test_set=test_set,
-        data_params=data_params_test,
+        data_params=data_params,
         robust=True,
     )
 
@@ -31,7 +35,5 @@ def test_train_individually_evaluate_ensemble():
     # - MAE: 1.0776
     # - RMSE: 1.5200
     assert r2 > -0.02
-    assert mae < 1.1
+    assert mae < 1.15
     assert rmse < 1.6
-
-    rmtree(model_dir)
