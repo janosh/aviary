@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split as split
 from examples.common_cli_args import add_common_args
 from roost.cgcnn import CrystalGraphConvNet, CrystalGraphData, collate_batch
 from roost.utils import (
+    bold,
     make_model_dir,
     results_classification,
     results_regression,
@@ -80,34 +81,19 @@ def main(
 
     model_dir = make_model_dir(model_name, ensemble, run_id)
 
-    dist_dict = {
-        "max_num_nbr": 12,
-        "radius": 8,
-        "dmin": 0,
-        "step": 0.2,
-        "use_cache": True,
-    }
-
-    dataset = CrystalGraphData(
-        data_path=data_path, fea_path=fea_path, task=task, **dist_dict
-    )
-    n_targets = dataset.n_targets
-    elem_emb_len = dataset.elem_fea_dim
-    nbr_fea_len = dataset.nbr_fea_dim
+    dataset = CrystalGraphData(data_path=data_path, fea_path=fea_path, task=task)
 
     train_idx = list(range(len(dataset)))
 
     if evaluate:
         if test_path:
             print(f"using independent test set: {test_path}")
-            test_set = CrystalGraphData(
-                data_path=test_path, fea_path=fea_path, task=task, **dist_dict
-            )
+            test_set = CrystalGraphData(test_path, fea_path, task)
             test_set = torch.utils.data.Subset(test_set, range(len(test_set)))
         elif test_size == 0.0:
             raise ValueError("test-size must be non-zero to evaluate model")
         else:
-            print(f"using {test_size} of training set as test set")
+            print(f"Using {bold(test_size)} of training set as test set")
             train_idx, test_idx = split(
                 train_idx, random_state=data_seed, test_size=test_size
             )
@@ -116,9 +102,7 @@ def main(
     if train:
         if val_path:
             print(f"using independent validation set: {val_path}")
-            val_set = CrystalGraphData(
-                data_path=val_path, fea_path=fea_path, task=task, **dist_dict
-            )
+            val_set = CrystalGraphData(val_path, fea_path, task)
             val_set = torch.utils.data.Subset(val_set, range(len(val_set)))
         else:
             if val_size == 0.0 and evaluate:
@@ -163,9 +147,9 @@ def main(
     model_params = {
         "task": task,
         "robust": robust,
-        "n_targets": n_targets,
-        "elem_emb_len": elem_emb_len,
-        "nbr_fea_len": nbr_fea_len,
+        "n_targets": dataset.n_targets,
+        "elem_emb_len": dataset.elem_fea_dim,
+        "nbr_fea_len": dataset.nbr_fea_dim,
         "elem_fea_len": elem_fea_len,
         "n_graph": n_graph,
         "h_fea_len": h_fea_len,
@@ -189,11 +173,8 @@ def main(
 
     if evaluate:
 
-        data_reset = {
-            "batch_size": 16 * batch_size,  # faster model inference
-            "shuffle": False,  # need fixed data order due to ensembling
-        }
-        data_params.update(data_reset)
+        data_params["batch_size"] = 64 * batch_size  # faster model inference
+        data_params["shuffle"] = False  # need fixed data order due to ensembling
 
         results_func = (
             results_regression if task == "regression" else results_classification
@@ -215,7 +196,7 @@ def input_parser():
     """
     parse input
     """
-    parser = argparse.ArgumentParser(description=("cgcnn"))
+    parser = argparse.ArgumentParser(description=("CGCNN"))
 
     parser.add_argument(
         "--model-name",
@@ -280,6 +261,6 @@ def input_parser():
 if __name__ == "__main__":
     args = input_parser()
 
-    print(f"The model will run on the {args.device} device")
+    print(f"Model will run on {bold(args.device)}")
 
     main(**vars(args))
