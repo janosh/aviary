@@ -64,7 +64,11 @@ class CrystalGraphData(Dataset):
         self.nbr_fea_dim = self.gdf.embedding_size
 
         self.task = task
-        self.n_targets = 1
+        self.n_targets = (
+            np.max(self.df[self.df.columns[2]].values) + 1
+            if task == "classification"
+            else 1
+        )
 
     def __len__(self):
         return len(self.df)
