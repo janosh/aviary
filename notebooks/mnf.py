@@ -55,7 +55,7 @@ train_idx = list(range(len(dataset)))
 
 
 # %% Testing
-print(f"using {test_size} of training set as test set")
+print(f"Using {test_size} of training set as test set")
 train_idx, test_idx = split(train_idx, random_state=data_seed, test_size=test_size)
 test_set = torch.utils.data.Subset(dataset, test_idx)
 

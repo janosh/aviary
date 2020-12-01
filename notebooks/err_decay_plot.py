@@ -2,7 +2,7 @@
 import pandas as pd
 
 from roost import plots
-from roost.core import ROOT
+from roost.utils import ROOT
 
 # %%
 model_name = "robust_mnf_expt"

@@ -6,7 +6,7 @@ from matplotlib.colors import Normalize
 from matplotlib.patches import Rectangle
 from pymatgen import Composition
 
-from roost.core import ROOT
+from roost.utils import ROOT
 
 
 def count_elements(formulas):

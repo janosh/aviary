@@ -1,5 +1,4 @@
 import json
-from os.path import abspath, dirname
 
 import numpy as np
 import torch
@@ -7,8 +6,6 @@ from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_squared_error as mse
 from torch.nn.functional import softmax
-
-ROOT = dirname(dirname(abspath(__file__)))
 
 
 class AverageMeter:

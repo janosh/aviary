@@ -48,7 +48,7 @@ def train_single(
         writer = None
 
     if (val_set is not None) and (model.best_val_score is None):
-        print("Getting Validation Baseline")
+        # get validation baseline
         with torch.no_grad():
             _, v_metrics = model.evaluate(
                 generator=val_generator,
