@@ -1,15 +1,16 @@
-from os.path import isfile
+from os.path import isfile, relpath
 
 import torch
 from torch.nn import CrossEntropyLoss, L1Loss, MSELoss, NLLLoss
 
 from roost.core import Normalizer, RobustL1Loss, RobustL2Loss
 from roost.segments import ResidualNet
+from roost.utils.io import bold
 
 
 def init_model(
     model_class,
-    model_path,
+    model_dir,
     model_params,
     loss,
     optim,
@@ -27,11 +28,20 @@ def init_model(
     robust = model_params["robust"]
     n_targets = model_params["n_targets"]
 
+    model_path = model_dir + "/checkpoint.pth.tar"
+
     if isfile(model_path):
         checkpoint = torch.load(model_path, map_location=device)
+
         model = model_class(**checkpoint["model_params"], device=device)
         model.to(device)
         model.load_state_dict(checkpoint["state_dict"])
+        if model.task != task:
+            print(
+                f"Loaded model had task {bold(model.task)}, changing to {bold(task)}.\n",
+                bold("Was this intended?"),
+            )
+            model.task = task
 
         if fine_tune:
             n_out_err = (
@@ -41,7 +51,6 @@ def init_model(
             assert model.model_params["robust"] == robust, n_out_err
             assert model.model_params["n_targets"] == n_targets, n_out_err
         elif transfer:
-            model.task = task
             model.model_params["task"] = task
             model.robust = robust
             model.model_params["robust"] = robust
@@ -65,13 +74,16 @@ def init_model(
             # TODO work out how to ensure that we are using the same optimizer
             # when resuming such that the state dictionaries do not clash.
 
-            print(f"Resuming training from '{model_path}'")
             model.epoch = checkpoint["epoch"]
             model.best_val_score = checkpoint["best_val_score"]
+            print(
+                f"Resuming training from '{bold(relpath(model_path))}' at epoch {model.epoch}"
+            )
+            print(f"Model's previous best validation score: {model.best_val_score:.4g}")
 
-    else:
+    else:  # model_path does not exist, train new model
         print("Training a new model from scratch")
-        print(f"Checkpoint will be saved to {model_path}")
+        print(f"Checkpoint will be saved to '{bold(relpath(model_path))}'")
         model = model_class(device=device, **model_params)
 
         model.to(device)
@@ -97,7 +109,7 @@ def init_model(
         normalizer = None
         criterion = NLLLoss() if robust else CrossEntropyLoss()
 
-    elif task == "regression":
+    else:  # regression
         normalizer = Normalizer()
         if robust:
             if loss == "L1":
@@ -118,8 +130,9 @@ def init_model(
 
     if isfile(model_path) and not fine_tune and not transfer:
         optimizer.load_state_dict(checkpoint["optimizer"])
-        normalizer.load_state_dict(checkpoint["normalizer"])
         scheduler.load_state_dict(checkpoint["scheduler"])
+        if normalizer is not None:
+            normalizer.load_state_dict(checkpoint["normalizer"])
 
     num_param = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"\nTotal Number of Trainable Parameters: {num_param:,}")

@@ -101,6 +101,7 @@ class BaseModel(nn.Module, ABC):
 
             if checkpoint:
                 checkpoint_dict = {
+                    "task": self.task,
                     "model_params": self.model_params,
                     "state_dict": self.state_dict(),
                     "epoch": self.epoch,
