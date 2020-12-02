@@ -5,10 +5,9 @@ import torch
 from sklearn.model_selection import train_test_split as split
 
 from examples.common_cli_args import add_common_args
-from roost.utils import bold
 from roost.roost import CompositionData, Roost, collate_batch
 from roost.utils import (
-    make_model_dir,
+    bold,
     results_classification,
     results_regression,
     train_ensemble,
@@ -21,11 +20,10 @@ def main(
     task,
     loss,
     robust,
-    model_name="roost",
+    model_dir,
     elem_fea_len=64,
     n_graph=3,
     ensemble=1,
-    run_id=1,
     data_seed=42,
     epochs=100,
     log=False,  # write tensorboard logs
@@ -72,18 +70,14 @@ def main(
         "Cannot fine-tune and" " transfer checkpoint(s) at the same time."
     )
 
-    model_dir = make_model_dir(model_name, ensemble, run_id)
-
-    dataset = CompositionData(data_path=data_path, fea_path=fea_path, task=task)
+    dataset = CompositionData(data_path, fea_path, task)
 
     train_idx = list(range(len(dataset)))
 
     if evaluate:
         if test_path:
             print(f"using independent test set: {test_path}")
-            test_set = CompositionData(
-                data_path=test_path, fea_path=fea_path, task=task
-            )
+            test_set = CompositionData(test_path, fea_path, task)
             test_set = torch.utils.data.Subset(test_set, range(len(test_set)))
         elif test_size == 0.0:
             raise ValueError("test-size must be non-zero to evaluate model")
@@ -146,13 +140,6 @@ def main(
         "elem_emb_len": dataset.elem_emb_len,
         "elem_fea_len": elem_fea_len,
         "n_graph": n_graph,
-        "elem_heads": 3,
-        "elem_gate": [256],
-        "elem_msg": [256],
-        "cry_heads": 3,
-        "cry_gate": [256],
-        "cry_msg": [256],
-        "out_hidden": [1024, 512, 256, 128, 64],
     }
 
     if train:

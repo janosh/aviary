@@ -1,7 +1,15 @@
+from os.path import relpath
+
 import torch
+import yaml
+
+from roost.utils import bold, make_model_dir
 
 
 def add_common_args(parser):
+    """This function requires that the provided parser already has
+    a model_name defined on it to make the model's directory.
+    """
 
     add_test_val_args(parser)
     add_dataloader_args(parser)
@@ -20,10 +28,12 @@ def add_common_args(parser):
     else:
         args.device = torch.device("cpu")
 
-    if args.verbose:
-        print("full set of CLI args used:")
-        for key, val in vars(args).items():
-            print(f"  - {key} = {val}")
+    args.model_dir = make_model_dir(args.model_name, args.ensemble, args.run_id)
+
+    with open(args.model_dir + "/cli_args.yml", "w") as file:
+        yaml.dump(vars(args), file)
+
+    print(f"Wrote CLI args to {bold(relpath(args.model_dir) + '/cli_args.yml')}")
 
     return args
 

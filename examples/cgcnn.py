@@ -7,7 +7,6 @@ from examples.common_cli_args import add_common_args
 from roost.cgcnn import CrystalGraphConvNet, CrystalGraphData, collate_batch
 from roost.utils import (
     bold,
-    make_model_dir,
     results_classification,
     results_regression,
     train_ensemble,
@@ -20,13 +19,12 @@ def main(
     task,
     loss,
     robust,
-    model_name="cgcnn",
+    model_dir,
     elem_fea_len=64,
     n_graph=4,
     n_hidden=1,
     h_fea_len=128,
     ensemble=1,
-    run_id=1,
     data_seed=42,
     epochs=100,
     log=False,  # write tensorboard logs
@@ -79,9 +77,7 @@ def main(
             "faithful to the original implementation."
         )
 
-    model_dir = make_model_dir(model_name, ensemble, run_id)
-
-    dataset = CrystalGraphData(data_path=data_path, fea_path=fea_path, task=task)
+    dataset = CrystalGraphData(data_path, fea_path, task)
 
     train_idx = list(range(len(dataset)))
 

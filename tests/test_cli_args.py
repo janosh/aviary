@@ -33,6 +33,7 @@ common_args = [
 
 def test_common_cli_args():
     parser = ArgumentParser()
+    parser.add_argument("--model-name", type=str, default="tests")
     args = add_common_args(parser)
     for arg in common_args:
         assert hasattr(args, arg)
