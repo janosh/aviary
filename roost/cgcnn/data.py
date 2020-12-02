@@ -55,13 +55,13 @@ class CrystalGraphData(Dataset):
 
         assert os.path.exists(fea_path), f"{fea_path} does not exist!"
         self.ari = LoadFeaturizer(fea_path)
-        self.elem_fea_dim = self.ari.embedding_size
+        self.elem_emb_len = self.ari.embedding_size
 
         self.max_num_nbr = max_num_nbr
         self.radius = radius
 
         self.gdf = GaussianDistance(dmin=dmin, dmax=self.radius, step=step)
-        self.nbr_fea_dim = self.gdf.embedding_size
+        self.nbr_fea_len = self.gdf.embedding_size
 
         self.task = task
         self.n_targets = (
