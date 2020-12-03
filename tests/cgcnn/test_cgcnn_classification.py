@@ -1,7 +1,7 @@
 from roost.cgcnn import CrystalGraphConvNet, CrystalGraphData, collate_batch
 from roost.utils import (
     make_model_dir,
-    results_classification,
+    classification_test,
     train_ensemble,
     train_single,
 )
@@ -28,7 +28,7 @@ def test_cgcnn_classification_robust():
     # ensures both the function and resuming training work
     train_ensemble(ensemble_folds=1, **train_kwargs)
 
-    acc, roc_auc, precision, recall, fscore = results_classification(
+    acc, roc_auc, precision, recall, fscore = classification_test(
         model_class=CrystalGraphConvNet,
         model_dir=model_dir,
         ensemble_folds=1,

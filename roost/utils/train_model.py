@@ -86,7 +86,7 @@ def train_ensemble(ensemble_folds, model_dir, *args, **kwargs):
     Note: It's faster to train multiple models at once in an array job and
     specify run_ids like ens_0, ens_1, ... than to train in sequence using
     this function. Either way the ensemble can be evaluated using
-    results_regression/_classification afterwards.
+    regression_test/_classification afterwards.
     """
 
     # allow using this function even in single-model mode

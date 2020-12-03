@@ -1,7 +1,7 @@
 from roost.roost import CompositionData, Roost, collate_batch
 from roost.utils import (
     make_model_dir,
-    results_classification,
+    classification_test,
     train_ensemble,
     train_single,
 )
@@ -28,7 +28,7 @@ def test_roost_classification_robust():
     # ensures both the function and resuming training work
     train_ensemble(ensemble_folds=1, **train_kwargs)
 
-    acc, roc_auc, precision, recall, fscore = results_classification(
+    acc, roc_auc, precision, recall, fscore = classification_test(
         model_class=Roost,
         model_dir=model_dir,
         ensemble_folds=1,

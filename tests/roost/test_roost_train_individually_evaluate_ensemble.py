@@ -1,5 +1,5 @@
 from roost.roost import CompositionData, Roost, collate_batch
-from roost.utils import make_model_dir, results_regression, train_single
+from roost.utils import make_model_dir, regression_test, train_single
 from tests import get_params
 
 
@@ -21,7 +21,7 @@ def test_train_individually_evaluate_ensemble():
     for run_id in ["ens_0", "ens_1"]:
         train_single(model_dir=model_dir + f"/{run_id}", **train_kwargs)
 
-    r2, mae, rmse = results_regression(
+    r2, mae, rmse = regression_test(
         model_class=Roost,
         model_dir=model_dir,
         ensemble_folds=2,

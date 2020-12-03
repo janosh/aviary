@@ -1,7 +1,7 @@
 from roost.roost import CompositionData, Roost, collate_batch
 from roost.utils import (
     make_model_dir,
-    results_regression,
+    regression_test,
     train_ensemble,
     train_single,
 )
@@ -27,7 +27,7 @@ def test_roost_regression_robust():
     # ensures both the function and resuming training work
     train_ensemble(ensemble_folds=1, **train_kwargs)
 
-    r2, mae, rmse = results_regression(
+    r2, mae, rmse = regression_test(
         model_class=Roost,
         model_dir=model_dir,
         ensemble_folds=1,

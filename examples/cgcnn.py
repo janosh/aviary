@@ -7,8 +7,8 @@ from examples.common_cli_args import add_common_args
 from roost.cgcnn import CrystalGraphConvNet, CrystalGraphData, collate_batch
 from roost.utils import (
     bold,
-    results_classification,
-    results_regression,
+    classification_test,
+    regression_test,
     train_ensemble,
 )
 
@@ -172,11 +172,9 @@ def main(
         data_params["batch_size"] = 64 * batch_size  # faster model inference
         data_params["shuffle"] = False  # need fixed data order due to ensembling
 
-        results_func = (
-            results_regression if task == "regression" else results_classification
-        )
+        test_func = regression_test if task == "regression" else classification_test
 
-        results_func(
+        test_func(
             model_class=CrystalGraphConvNet,
             model_dir=model_dir,
             ensemble_folds=ensemble,

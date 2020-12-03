@@ -1,4 +1,5 @@
 import torch
+from tqdm import trange
 
 from roost.base import BaseModel
 from roost.segments import ResidualNet
@@ -82,6 +83,6 @@ class Roost(BaseModel):
         # apply neural network to map from learned features to target
         if repeat > 1:
             return torch.stack(
-                [self.output_nn(crys_fea) for _ in range(repeat)], dim=-1
+                [self.output_nn(crys_fea) for _ in trange(repeat)], dim=-1
             )
         return self.output_nn(crys_fea)

@@ -165,13 +165,13 @@ def RobustL2Loss(output, log_std, target):
 
 def sampled_softmax(pre_logits, log_std, samples=10):
     """
-    Draw samples from gaussian distributed pre-logits and use these to estimate
+    Draw samples from Gaussian distributed pre-logits and use these to estimate
     a mean and aleatoric uncertainty.
     """
     # NOTE here as we do not risk dividing by zero should we really be
     # predicting log_std or is there another way to deal with negative numbers?
     # This choice may have an unknown effect on the calibration of the uncertainties
-    sam_std = torch.exp(log_std).repeat_interleave(samples, dim=0)
+    sam_std = log_std.exp().repeat_interleave(samples, dim=0)
     # TODO here we are normally distributing the samples even if the loss
     # uses a different prior?
     epsilon = torch.randn_like(sam_std)
