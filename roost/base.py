@@ -19,9 +19,7 @@ from .core import (
 
 
 class BaseModel(nn.Module, ABC):
-    """
-    A base class for models.
-    """
+    """ A base class for regression and classification models. """
 
     def __init__(
         self, task, n_targets, robust, device=None, epoch=1, best_val_score=None
@@ -132,7 +130,7 @@ class BaseModel(nn.Module, ABC):
     def evaluate(
         self, generator, criterion, optimizer, normalizer, action="train", verbose=False
     ):
-        """evaluate the model"""
+        """ Evaluate the model """
 
         if action == "val":
             self.eval()
@@ -206,9 +204,7 @@ class BaseModel(nn.Module, ABC):
         return loss_meter.avg, metric_meter.metric_dict
 
     def predict(self, generator, verbose=False, repeat=1):
-        """
-        evaluate the model
-        """
+        """ Generate predictions """
 
         test_ids = []
         test_comp = []

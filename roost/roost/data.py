@@ -7,7 +7,7 @@ import torch
 from pymatgen import Composition
 from torch.utils.data import Dataset
 
-from roost.core import LoadFeaturizer
+from roost.core import Featurizer
 
 
 class CompositionData(Dataset):
@@ -23,7 +23,7 @@ class CompositionData(Dataset):
         self.df = pd.read_csv(data_path, keep_default_na=False, na_values=[])
 
         assert exists(fea_path), f"{fea_path} does not exist!"
-        self.elem_features = LoadFeaturizer(fea_path)
+        self.elem_features = Featurizer.from_json(fea_path)
         self.elem_emb_len = self.elem_features.embedding_size
         self.task = task
         if self.task == "regression":

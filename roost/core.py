@@ -115,24 +115,15 @@ class Featurizer:
     def embedding_size(self):
         return len(self._embedding[list(self._embedding.keys())[0]])
 
-
-class LoadFeaturizer(Featurizer):
-    """
-    Initialize a featurizer from a JSON file.
-
-    Parameters
-    ----------
-    embedding_file: str
-        The path to the .json file
-    """
-
-    def __init__(self, embedding_file):
-        with open(embedding_file) as f:
-            embedding = json.load(f)
+    @classmethod
+    def from_json(cls, embedding_file):
+        with open(embedding_file) as file:
+            embedding = json.load(file)
         allowed_types = set(embedding.keys())
-        super().__init__(allowed_types)
+        instance = cls(allowed_types)
         for key, value in embedding.items():
-            self._embedding[key] = np.array(value, dtype=float)
+            instance._embedding[key] = np.array(value, dtype=float)
+        return instance
 
 
 def save_checkpoint(state, is_best, model_dir):

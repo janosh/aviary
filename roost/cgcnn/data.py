@@ -9,7 +9,7 @@ import torch
 from pymatgen import Structure
 from torch.utils.data import Dataset
 
-from roost.core import LoadFeaturizer
+from roost.core import Featurizer
 
 
 class CrystalGraphData(Dataset):
@@ -54,7 +54,7 @@ class CrystalGraphData(Dataset):
         self.df = pd.read_csv(data_path, na_filter=False)
 
         assert os.path.exists(fea_path), f"{fea_path} does not exist!"
-        self.ari = LoadFeaturizer(fea_path)
+        self.ari = Featurizer.from_json(fea_path)
         self.elem_emb_len = self.ari.embedding_size
 
         self.max_num_nbr = max_num_nbr
