@@ -2,67 +2,7 @@ import json
 
 import numpy as np
 import torch
-from sklearn.metrics import accuracy_score, f1_score
-from sklearn.metrics import mean_absolute_error as mae
-from sklearn.metrics import mean_squared_error as mse
 from torch.nn.functional import softmax
-
-
-class AverageMeter:
-    """Computes and stores the average and current value"""
-
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
-
-
-class RegressionMetrics:
-    """Computes and stores average metrics for regression tasks"""
-
-    def __init__(self):
-        self.rmse_meter = AverageMeter()
-        self.mae_meter = AverageMeter()
-
-    def update(self, pred, target):
-        mae_error = mae(pred, target)
-        self.mae_meter.update(mae_error)
-
-        rmse_error = np.sqrt(mse(pred, target))
-        self.rmse_meter.update(rmse_error)
-
-    @property
-    def metric_dict(self):
-        return {"MAE": self.mae_meter.avg, "RMSE": self.rmse_meter.avg}
-
-
-class ClassificationMetrics:
-    """Computes and stores average metrics for classification tasks"""
-
-    def __init__(self):
-        self.acc_meter = AverageMeter()
-        self.fscore_meter = AverageMeter()
-
-    def update(self, pred, target):
-        acc = accuracy_score(target, np.argmax(pred, axis=1))
-        self.acc_meter.update(acc)
-
-        fscore = f1_score(target, np.argmax(pred, axis=1), average="weighted")
-        self.fscore_meter.update(fscore)
-
-    @property
-    def metric_dict(self):
-        return {"Acc": self.acc_meter.avg, "F1": self.fscore_meter.avg}
 
 
 class Normalizer:

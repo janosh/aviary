@@ -3,19 +3,14 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import torch
+from sklearn.metrics import f1_score
 from torch import nn
 from torch.nn.functional import softmax
 from tqdm.autonotebook import trange
 
 from roost.utils import interruptable
 
-from .core import (
-    AverageMeter,
-    ClassificationMetrics,
-    RegressionMetrics,
-    sampled_softmax,
-    save_checkpoint,
-)
+from .core import sampled_softmax, save_checkpoint
 
 
 class BaseModel(nn.Module, ABC):
@@ -35,8 +30,8 @@ class BaseModel(nn.Module, ABC):
     @interruptable
     def fit(
         self,
-        train_generator,
-        val_generator,
+        train_set,
+        val_set,
         optimizer,
         scheduler,
         epochs,
@@ -51,47 +46,38 @@ class BaseModel(nn.Module, ABC):
         for epoch in range(start_epoch, start_epoch + epochs):
             self.epoch += 1
             # Training
-            t_loss, t_metrics = self.evaluate(
-                generator=train_generator,
-                criterion=criterion,
-                optimizer=optimizer,
-                normalizer=normalizer,
-                action="train",
-                verbose=verbose,
+            train_metrics = self.evaluate(
+                train_set, criterion, optimizer, normalizer, "train", verbose
             )
 
             if verbose:
                 print(f"Epoch: [{epoch}/{start_epoch + epochs - 1}]")
                 metric_str = "\t".join(
-                    f"{key} {val:.3f}" for key, val in t_metrics.items()
+                    f"{key} {val:.3f}" for key, val in train_metrics.items()
                 )
-                print(f"Train      : Loss {t_loss:.4f}\t{metric_str}")
+                print(f"Train      : {metric_str}")
 
             # Validation
-            if val_generator is None:
+            if val_set is None:
                 is_best = False
             else:
                 with torch.no_grad():
                     # evaluate on validation set
-                    v_loss, v_metrics = self.evaluate(
-                        generator=val_generator,
-                        criterion=criterion,
-                        optimizer=None,
-                        normalizer=normalizer,
-                        action="val",
+                    val_metrics = self.evaluate(
+                        val_set, criterion, None, normalizer, action="val"
                     )
 
                 if verbose:
                     metric_str = "\t".join(
-                        f"{key} {val:.3f}" for key, val in v_metrics.items()
+                        f"{key} {val:.3f}" for key, val in val_metrics.items()
                     )
-                    print(f"Validation : Loss {v_loss:.4f}\t{metric_str}")
+                    print(f"Validation : {metric_str}")
 
                 if self.task == "regression":
-                    val_score = v_metrics["MAE"]
+                    val_score = val_metrics["mae"]
                     is_best = val_score < self.best_val_score
-                elif self.task == "classification":
-                    val_score = v_metrics["Acc"]
+                else:  # classification
+                    val_score = val_metrics["acc"]
                     is_best = val_score > self.best_val_score
 
             if is_best:
@@ -113,13 +99,11 @@ class BaseModel(nn.Module, ABC):
                 save_checkpoint(checkpoint_dict, is_best, model_dir)
 
             if writer is not None:
-                writer.add_scalar("train/loss", t_loss, epoch + 1)
-                for metric, val in t_metrics.items():
-                    writer.add_scalar(f"train/{metric}", val, epoch + 1)
+                for metric, val in train_metrics.items():
+                    writer.add_scalar(f"training/{metric}", val, epoch + 1)
 
-                if val_generator is not None:
-                    writer.add_scalar("validation/loss", v_loss, epoch + 1)
-                    for metric, val in v_metrics.items():
+                if val_set is not None:
+                    for metric, val in val_metrics.items():
                         writer.add_scalar(f"validation/{metric}", val, epoch + 1)
 
             scheduler.step()
@@ -130,23 +114,13 @@ class BaseModel(nn.Module, ABC):
     def evaluate(
         self, generator, criterion, optimizer, normalizer, action="train", verbose=False
     ):
-        """ Evaluate the model """
+        """ Evaluate the model for one epoch """
 
-        if action == "val":
-            self.eval()
-        elif action == "train":
-            self.train()
-        else:
-            raise NameError("Only train or val allowed as action")
+        assert action in ["train", "val"], f"action must be train or val, got {action}"
+        self.train() if action == "train" else self.eval()
 
-        loss_meter = AverageMeter()
-
-        if self.task == "regression":
-            metric_meter = RegressionMetrics()
-        elif self.task == "classification":
-            metric_meter = ClassificationMetrics()
-        else:
-            raise ValueError(f"invalid task: {self.task}")
+        # records both regr. and clf. metrics for an epoch to compute averages below
+        metrics = {"loss": [], "mae": [], "rmse": [], "acc": [], "f1": []}
 
         with trange(len(generator), disable=(not verbose)) as t:
             # we do not need batch_comp or batch_ids when training
@@ -155,43 +129,46 @@ class BaseModel(nn.Module, ABC):
                 # move tensors to GPU
                 input_ = (tensor.to(self.device) for tensor in input_)
 
-                if self.task == "regression":
-                    # normalize target if needed
-                    target_norm = normalizer.norm(target)
-                    target_norm = target_norm.to(self.device)
-                else:  # classification
-                    target = target.to(self.device)
-
                 # compute output
                 output = self(*input_)
 
                 if self.task == "regression":
+                    target_norm = normalizer.norm(target)
+                    target_norm = target_norm.to(self.device)
                     if self.robust:
-                        output, log_std = output.chunk(2, dim=1)
-                        loss = criterion(output, log_std, target_norm)
+                        mean, log_std = output.chunk(2, dim=1)
+                        loss = criterion(mean, log_std, target_norm)
+
+                        pred = normalizer.denorm(mean.data.cpu())
+                        std_al = normalizer.std * log_std.exp().data.cpu()
+                        ae = (target - pred).abs()
                     else:
                         loss = criterion(output, target_norm)
+                        pred = normalizer.denorm(output.data.cpu())
 
-                    pred = normalizer.denorm(output.data.cpu())
-                    metric_meter.update(
-                        pred.data.cpu().numpy(), target.data.cpu().numpy()
-                    )
+                    metrics["mae"].append((pred - target).abs().mean())
+                    metrics["rmse"].append(((pred - target) ** 2).mean() ** 0.5)
 
-                elif self.task == "classification":
+                else:  # classification
+                    target = target.to(self.device).squeeze()
                     if self.robust:
                         output, log_std = output.chunk(2, dim=1)
                         logits = sampled_softmax(output, log_std)
-                        loss = criterion(torch.log(logits), target.squeeze(1))
+                        loss = criterion(torch.log(logits), target)
                     else:
-                        loss = criterion(output, target.squeeze(1))
+                        loss = criterion(output, target)
                         logits = softmax(output, dim=1)
 
-                    # classification metrics from sklearn need numpy arrays
-                    metric_meter.update(
-                        logits.data.cpu().numpy(), target.data.cpu().numpy()
+                    # call .cpu() for automatic numpy conversion since sklearn metrics need numpy arrays
+                    metrics["acc"].append(
+                        (logits.argmax(1) == target).float().mean().cpu()
                     )
+                    f1 = f1_score(
+                        logits.argmax(1).cpu(), target.cpu(), average="weighted"
+                    )
+                    metrics["f1"].append(f1)
 
-                loss_meter.update(loss.data.cpu().item())
+                metrics["loss"].append(loss.cpu().item())
 
                 if action == "train":
                     # compute gradient and take an optimizer step
@@ -201,7 +178,9 @@ class BaseModel(nn.Module, ABC):
 
                 t.update()
 
-        return loss_meter.avg, metric_meter.metric_dict
+        metrics = {key: np.array(val).mean() for key, val in metrics.items() if val}
+
+        return metrics
 
     def predict(self, generator, verbose=False, repeat=1):
         """ Generate predictions """

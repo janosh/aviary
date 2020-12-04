@@ -50,19 +50,19 @@ def train_single(
     if (val_set is not None) and (model.best_val_score is None):
         # get validation baseline
         with torch.no_grad():
-            _, v_metrics = model.evaluate(
-                generator=val_generator,
-                criterion=criterion,
+            val_metrics = model.evaluate(
+                val_generator,
+                criterion,
                 optimizer=None,
                 normalizer=normalizer,
                 action="val",
                 verbose=verbose,
             )
             if model.task == "regression":
-                val_score = v_metrics["MAE"]
+                val_score = val_metrics["mae"]
                 print(f"Validation Baseline: MAE {val_score:.3f}\n")
             else:  # classification
-                val_score = v_metrics["Acc"]
+                val_score = val_metrics["acc"]
                 print(f"Validation Baseline: Acc {val_score:.3f}\n")
             model.best_val_score = val_score
 

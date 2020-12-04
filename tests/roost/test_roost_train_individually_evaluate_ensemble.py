@@ -34,6 +34,6 @@ def test_train_individually_evaluate_ensemble():
     # - R2 Score: -0.01057
     # - MAE: 1.0776
     # - RMSE: 1.5200
-    assert r2 > -0.02
+    assert r2 > -0.03
     assert mae < 1.15
     assert rmse < 1.6
