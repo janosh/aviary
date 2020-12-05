@@ -5,7 +5,7 @@ import torch
 from sklearn.model_selection import train_test_split as split
 
 from roost.roost import CompositionData, Roost, collate_batch
-from roost.utils import ROOT, make_model_dir, regression_test, train_ensemble
+from roost.utils import ROOT, make_model_dir, run_test, train_ensemble
 
 torch.manual_seed(0)  # ensure reproducible results
 
@@ -34,7 +34,9 @@ parser.add_argument("--model-name", type=str, default="robust_mnf_oqmd")
 parser.add_argument("--run-id", type=str, default="run_1")
 parser.add_argument("--use-mnf", action="store_false")  # False by default
 parser.add_argument("--epochs", type=int, default=10)
-parser.add_argument("--data-path", type=str, default="oqmd-form-enthalpy.csv")
+parser.add_argument(
+    "--data-path", type=str, default=f"{ROOT}/data/datasets/oqmd-form-enthalpy.csv"
+)
 flags, _ = parser.parse_known_args()
 
 args = ["model_name", "run_id", "use_mnf", "epochs", "data_path"]
@@ -116,7 +118,8 @@ train_ensemble(
 data_params["batch_size"] = 64 * batch_size  # faster model inference
 data_params["shuffle"] = False  # need fixed data order due to ensembling
 
-regression_test(
+run_test(
+    task,
     model_class=Roost,
     model_dir=model_dir,
     ensemble_folds=ensemble,

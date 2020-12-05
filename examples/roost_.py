@@ -6,12 +6,7 @@ from sklearn.model_selection import train_test_split as split
 
 from examples.common_cli_args import add_common_args
 from roost.roost import CompositionData, Roost, collate_batch
-from roost.utils import (
-    bold,
-    regression_test,
-    classification_test,
-    train_ensemble,
-)
+from roost.utils import bold, run_test, train_ensemble
 
 
 def main(
@@ -162,9 +157,8 @@ def main(
         data_params["batch_size"] = 64 * batch_size  # faster model inference
         data_params["shuffle"] = False  # need fixed data order due to ensembling
 
-        test_func = regression_test if task == "regression" else classification_test
-
-        test_func(
+        run_test(
+            task,
             model_class=Roost,
             model_dir=model_dir,
             ensemble_folds=ensemble,
