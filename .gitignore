@@ -9,3 +9,4 @@ __pycache__
 # CGCNN cache files
 data/datasets/cache
 data/datasets/large
+data/datasets/bandstructs

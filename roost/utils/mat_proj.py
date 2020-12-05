@@ -34,9 +34,9 @@ def fetch_mp(criteria={}, properties=[], save_to=None):
 
     properties = list({*properties, "material_id"})  # use set to remove dupes
 
-    # MPRester connects to the Material Project REST interface.
+    # MPRester connects to the Materials Project REST API
     with MPRester(API_KEY) as mp:
-        # mp.query performs the actual API call.
+        # mp.query performs the actual API call
         data = mp.query(criteria, properties)
 
     if data:
