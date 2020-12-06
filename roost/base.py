@@ -25,6 +25,7 @@ class BaseModel(nn.Module, ABC):
         self.device = device
         self.epoch = epoch
         self.best_val_score = best_val_score
+        self.val_score_name = "MAE" if task == "regression" else "Acc"
         self.model_params = {}
 
     @interruptable
@@ -90,6 +91,7 @@ class BaseModel(nn.Module, ABC):
                     "state_dict": self.state_dict(),
                     "epoch": self.epoch,
                     "best_val_score": self.best_val_score,
+                    "val_score_name": self.val_score_name,
                     "optimizer": optimizer.state_dict(),
                     "scheduler": scheduler.state_dict(),
                 }
@@ -158,11 +160,12 @@ class BaseModel(nn.Module, ABC):
                     else:
                         loss = criterion(output, target)
                         logits = softmax(output, dim=1)
-
-                    # call .cpu() for automatic numpy conversion since sklearn metrics need numpy arrays
                     metrics["acc"].append(
                         (logits.argmax(1) == target).float().mean().cpu()
                     )
+
+                    # call .cpu() for automatic numpy conversion
+                    # since sklearn metrics need numpy arrays
                     f1 = f1_score(
                         logits.argmax(1).cpu(), target.cpu(), average="weighted"
                     )

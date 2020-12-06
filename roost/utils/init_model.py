@@ -74,12 +74,14 @@ def init_model(
             # TODO work out how to ensure that we are using the same optimizer
             # when resuming such that the state dictionaries do not clash.
 
-            model.epoch = checkpoint["epoch"]
-            model.best_val_score = checkpoint["best_val_score"]
+            epoch = model.epoch = checkpoint["epoch"]
+            best_score = model.best_val_score = checkpoint["best_val_score"]
+            score_name = model.val_score_name = checkpoint["val_score_name"]
             print(
-                f"Resuming training from '{bold(relpath(model_path))}' at epoch {model.epoch}"
+                f"Resuming training from '{bold(relpath(model_path))}' at epoch {epoch}"
             )
-            print(f"Model's previous best validation score: {model.best_val_score:.4g}")
+            score = f"{score_name} = {best_score:.4g}"
+            print(f"Model's previous best validation score: {score}")
 
     else:  # model_path does not exist, train new model
         print("Training a new model from scratch")
