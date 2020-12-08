@@ -26,8 +26,7 @@ def predict(model_class, test_set, checkpoint_path, device, robust, repeat):
     normalizer = Normalizer()
     normalizer.load_state_dict(checkpoint["normalizer"])
 
-    with torch.no_grad():
-        idx, comp, y_test, output = model.predict(test_set, repeat=repeat)
+    idx, comp, y_test, output = model.predict(test_set, repeat=repeat)
 
     df = pd.DataFrame({"idx": idx, "comp": comp, "y_test": y_test})
 

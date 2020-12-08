@@ -28,8 +28,7 @@ def predict(model_class, test_set, checkpoint_path, device, robust):
     model.to(device)
     model.load_state_dict(checkpoint["state_dict"])
 
-    with torch.no_grad():
-        idx, comp, y_test, output = model.predict(test_set)
+    idx, comp, y_test, output = model.predict(test_set)
 
     df = pd.DataFrame({"idx": idx, "comp": comp, "y_test": y_test})
 
