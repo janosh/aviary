@@ -1,8 +1,11 @@
 import matplotlib.pyplot as plt
 
 
-def add_identity(ax, **line_kwargs):
+def add_identity(ax=None, **line_kwargs):
     """Add a parity line (y = x) (aka identity) to the provided axis."""
+    if ax is None:
+        ax = plt.gca()
+
     # zorder=0 ensures other plotted data displays on top of line
     default_kwargs = dict(alpha=0.5, zorder=0, linestyle="dashed", color="black")
     (identity,) = ax.plot([], [], **default_kwargs, **line_kwargs)
