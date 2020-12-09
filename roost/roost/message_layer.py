@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from roost.segments import SimpleNet, WeightedAttentionPooling
+from roost.segments import AttentionPooling, SimpleNet
 
 
 class MessageLayer(nn.Module):
@@ -15,7 +15,7 @@ class MessageLayer(nn.Module):
 
         # Pooling and Output
         pool_layers = [
-            WeightedAttentionPooling(
+            AttentionPooling(
                 gate_nn=SimpleNet([2 * elem_fea_len, *elem_gate, 1]),
                 message_nn=SimpleNet([2 * elem_fea_len, *elem_msg, elem_fea_len]),
             )
@@ -61,6 +61,6 @@ class MessageLayer(nn.Module):
             head_fea.append(attnhead(fea, index=self_fea_idx, weights=elem_nbr_weights))
 
         # average the attention heads
-        fea = torch.mean(torch.stack(head_fea), dim=0)
+        fea = torch.stack(head_fea).mean(dim=0)
 
         return fea + elem_in_fea

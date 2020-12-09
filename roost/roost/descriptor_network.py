@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from roost.segments import SimpleNet, WeightedAttentionPooling
+from roost.segments import AttentionPooling, SimpleNet
 
 from .message_layer import MessageLayer
 
@@ -38,7 +38,7 @@ class DescriptorNetwork(nn.Module):
 
         # define a global pooling function for materials
         cry_pool_layers = [
-            WeightedAttentionPooling(
+            AttentionPooling(
                 gate_nn=SimpleNet([elem_fea_len, *cry_gate, 1]),
                 message_nn=SimpleNet([elem_fea_len, *cry_msg, elem_fea_len]),
             )
