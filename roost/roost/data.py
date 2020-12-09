@@ -40,6 +40,12 @@ class CompositionData(Dataset):
                 )
             self.n_targets = np.max(self.df[self.df.columns[2]].values) + 1
 
+        if type(self.n_targets) != int:
+            ValueError(
+                f"dataset.n_targets is non-integer {self.n_targets},"
+                " you likely specified the wrong data_path"
+            )
+
     def __len__(self):
         return len(self.df)
 

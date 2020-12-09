@@ -77,27 +77,24 @@ def save_checkpoint(state, is_best, model_dir):
 
 
 def RobustL1Loss(output, log_std, target):
+    """Robust L1 loss using a Lorentzian prior.
+    Allows for aleatoric uncertainty estimation.
     """
-    Robust L1 loss using a lorentzian prior. Allows for estimation
-    of an aleatoric uncertainty.
-    """
-    loss = 2 ** 0.5 * torch.abs(output - target) * torch.exp(-log_std) + log_std
+    loss = 2 ** 0.5 * (output - target).abs() / log_std.exp() + log_std
     return loss.mean()
 
 
 def RobustL2Loss(output, log_std, target):
+    """Robust L2 loss using a gaussian prior.
+    Allows for aleatoric uncertainty estimation.
     """
-    Robust L2 loss using a gaussian prior. Allows for estimation
-    of an aleatoric uncertainty.
-    """
-    loss = 0.5 * (output - target) ** 2 * torch.exp(-2 * log_std) + log_std
+    loss = 0.5 * (output - target) ** 2 / (2 * log_std).exp() + log_std
     return loss.mean()
 
 
 def sampled_softmax(pre_logits, log_std, samples=10):
-    """
-    Draw samples from Gaussian distributed pre-logits and use these to estimate
-    a mean and aleatoric uncertainty.
+    """Draw samples from Gaussian distributed pre-logits and use these to
+    estimate a mean and aleatoric uncertainty.
     """
     # NOTE here as we do not risk dividing by zero should we really be
     # predicting log_std or is there another way to deal with negative numbers?
@@ -106,8 +103,6 @@ def sampled_softmax(pre_logits, log_std, samples=10):
     # TODO here we are normally distributing the samples even if the loss
     # uses a different prior?
     epsilon = torch.randn_like(sam_std)
-    pre_logits = pre_logits.repeat_interleave(samples, dim=0) + torch.mul(
-        epsilon, sam_std
-    )
+    pre_logits = pre_logits.repeat_interleave(samples, dim=0) + epsilon * sam_std
     logits = softmax(pre_logits, dim=1).view(len(log_std), samples, -1)
     return logits.mean(dim=1)

@@ -26,9 +26,7 @@ def init_model(
     swa=False,
 ):
 
-    task = model_params["task"]
-    robust = model_params["robust"]
-    n_targets = model_params["n_targets"]
+    task, robust, n_targets = [model_params[k] for k in ["task", "robust", "n_targets"]]
 
     model_path = model_dir + "/checkpoint.pth.tar"
 
@@ -38,10 +36,11 @@ def init_model(
         model = model_class(**checkpoint["model_params"], device=device)
         model.to(device)
         model.load_state_dict(checkpoint["state_dict"])
+
         if model.task != task:
             print(
-                f"Loaded model had task {bold(model.task)}, changing to {bold(task)}.\n",
-                bold("Was this intended?"),
+                f"Loaded model had task {bold(model.task)}, changing to {bold(task)}.",
+                bold("\n--> Was this intended?"),
             )
             model.task = task
 
@@ -75,25 +74,26 @@ def init_model(
         else:  # default case: resume previous training with no changes to data or model
             # TODO work out how to ensure that we are using the same optimizer
             # when resuming such that the state dictionaries do not clash.
-
             epoch = model.epoch = checkpoint["epoch"]
-            best_score = model.best_val_score = checkpoint["best_val_score"]
-            score_name = model.val_score_name = checkpoint["val_score_name"]
             print(
                 f"Resuming training from '{bold(relpath(model_path))}' at epoch {epoch}"
             )
+
+            best_score = model.best_val_score = checkpoint["best_val_score"]
+            score_name = model.val_score_name = checkpoint["val_score_name"]
             score = f"{score_name} = {best_score:.4g}"
             print(f"Model's previous best validation score: {score}")
 
     else:  # model_path does not exist, train new model
-        print("Training a new model from scratch")
+        print(bold("Training a new model from scratch"))
         print(f"Checkpoint will be saved to '{bold(relpath(model_path))}'")
         model = model_class(device=device, **model_params)
 
         model.to(device)
 
     # Select optimizer
-    assert optim in ["SGD", "Adam", "AdamW"], "Only SGD, Adam or AdamW allowed"
+    valid_optims = ["SGD", "Adam", "AdamW"]
+    assert optim in valid_optims, f"optim must be in {valid_optims}, got '{optim}'"
     optim_class = getattr(torch.optim, optim)
     optim_params = {
         "params": model.parameters(),
@@ -115,22 +115,12 @@ def init_model(
 
     else:  # regression
         normalizer = Normalizer()
-        if robust:
-            if loss == "L1":
-                criterion = RobustL1Loss
-            elif loss == "L2":
-                criterion = RobustL2Loss
-            else:
-                raise NameError(
-                    "Only L1 or L2 losses are allowed for robust regression tasks"
-                )
+        if loss == "L1":
+            criterion = RobustL1Loss if robust else L1Loss()
+        elif loss == "L2":
+            criterion = RobustL2Loss if robust else MSELoss()
         else:
-            if loss == "L1":
-                criterion = L1Loss()
-            elif loss == "L2":
-                criterion = MSELoss()
-            else:
-                raise NameError("Only L1 or L2 losses are allowed for regression tasks")
+            raise NameError(f"Only L1 or L2 loss allowed for regression, got {loss}")
 
     if isfile(model_path) and not fine_tune and not transfer:
         optimizer.load_state_dict(checkpoint["optimizer"])
@@ -156,13 +146,6 @@ def init_model(
 
     num_param = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"\nTotal Number of Trainable Parameters: {num_param:,}")
-
-    # TODO parallelise the code over multiple GPUs. Currently DataParallel
-    # crashes as subsets of the batch have different sizes due to the use of
-    # lists of lists rather the zero-padding.
-    # if (torch.cuda.device_count() > 1) and (device==torch.device("cuda")):
-    #     print("The model will use", torch.cuda.device_count(), "GPUs!")
-    #     model = nn.DataParallel(model)
 
     model.to(device)
 
