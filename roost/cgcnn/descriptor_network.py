@@ -1,6 +1,5 @@
 from torch import nn
-
-from roost.segments import MeanPooling
+from torch_scatter.scatter import scatter_mean
 
 from .conv_layer import ConvLayer
 
@@ -19,8 +18,6 @@ class DescriptorNetwork(nn.Module):
         self.convs = nn.ModuleList(
             [ConvLayer(elem_fea_len, nbr_fea_len) for _ in range(n_graph)]
         )
-
-        self.pooling = MeanPooling()
 
     def forward(self, atom_fea, nbr_fea, self_fea_idx, nbr_fea_idx, crystal_atom_idx):
         """
@@ -51,10 +48,10 @@ class DescriptorNetwork(nn.Module):
         """
         atom_fea = self.embedding(atom_fea)
 
-        for conv_func in self.convs:
-            atom_fea = conv_func(atom_fea, nbr_fea, self_fea_idx, nbr_fea_idx)
+        for conv in self.convs:
+            atom_fea = conv(atom_fea, nbr_fea, self_fea_idx, nbr_fea_idx)
 
-        crys_fea = self.pooling(atom_fea, crystal_atom_idx)
+        crys_fea = scatter_mean(atom_fea, crystal_atom_idx, dim=0)  # mean pooling
 
         # NOTE required to match the reference implementation
         crys_fea = nn.functional.softplus(crys_fea)

@@ -1,25 +1,17 @@
 import torch
 from torch import nn
-
-from roost.segments import SumPooling
+from torch.nn.functional import softplus
+from torch_scatter import scatter_add
 
 
 class ConvLayer(nn.Module):
-    """
-    Convolutional operation on graphs
-    """
+    """ Convolutional operation on graphs """
 
     def __init__(self, elem_fea_len, nbr_fea_len):
         """
-        Initialize ConvLayer.
-
-        Parameters
-        ----------
-
-        elem_fea_len: int
-                Number of atom hidden features.
-        nbr_fea_len: int
-                Number of bond features.
+        Args:
+            elem_fea_len (int): Number of atom hidden features
+            nbr_fea_len (int): Number of bond features
         """
         super().__init__()
         self.elem_fea_len = elem_fea_len
@@ -27,12 +19,8 @@ class ConvLayer(nn.Module):
         self.fc_full = nn.Linear(
             2 * self.elem_fea_len + self.nbr_fea_len, 2 * self.elem_fea_len
         )
-        self.sigmoid = nn.Sigmoid()
-        self.softplus1 = nn.Softplus()
         self.bn1 = nn.BatchNorm1d(2 * self.elem_fea_len)
         self.bn2 = nn.BatchNorm1d(self.elem_fea_len)
-        self.softplus2 = nn.Softplus()
-        self.pooling = SumPooling()
 
     def forward(self, atom_in_fea, nbr_fea, self_fea_idx, nbr_fea_idx):
         """
@@ -68,14 +56,14 @@ class ConvLayer(nn.Module):
         total_fea = self.bn1(total_fea)
 
         filter_fea, core_fea = total_fea.chunk(2, dim=1)
-        filter_fea = self.sigmoid(filter_fea)
-        core_fea = self.softplus1(core_fea)
+        filter_fea = torch.sigmoid(filter_fea)
+        core_fea = softplus(core_fea)
 
         # take the elementwise product of the filter and core
         nbr_msg = filter_fea * core_fea
-        nbr_sumed = self.pooling(nbr_msg, self_fea_idx)
+        nbr_sumed = scatter_add(nbr_msg, self_fea_idx, dim=0)  # sum pooling
 
         nbr_sumed = self.bn2(nbr_sumed)
-        out = self.softplus2(atom_in_fea + nbr_sumed)
+        out = softplus(atom_in_fea + nbr_sumed)
 
         return out
