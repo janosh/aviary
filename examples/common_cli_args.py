@@ -17,6 +17,7 @@ def add_common_args(parser):
     add_ensemble_args(parser)
     add_restart_args(parser)
     add_task_args(parser)
+    add_swa_args(parser)
 
     args, _ = parser.parse_known_args()
 
@@ -32,6 +33,9 @@ def add_common_args(parser):
 
     with open(args.model_dir + "/cli_args.yml", "w") as file:
         yaml.dump(vars(args), file)
+
+    if args.swa:
+        args.swa = {"lr": args.swa_lr, "start": args.swa_start}
 
     print(f"Wrote CLI args to {bold(relpath(args.model_dir) + '/cli_args.yml')}")
 
@@ -203,4 +207,24 @@ def add_task_args(parser):
         "--verbose",
         action="store_true",
         help="Whether to print training and evaluation progress",
+    )
+
+
+def add_swa_args(parser):
+    # stochastic weight averaging
+    # https://pytorch.org/blog/stochastic-weight-averaging-in-pytorch
+    parser.add_argument("--swa", action="store_true", help="enable SWA")
+    parser.add_argument(
+        "--swa-lr",
+        default=0.005,
+        type=float,
+        metavar="FLOAT",
+        help="learning rate for SWA update steps",
+    )
+    parser.add_argument(
+        "--swa-start",
+        default=100,
+        type=int,
+        metavar="INT",
+        help="epoch at which to start SWA",
     )

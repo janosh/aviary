@@ -18,6 +18,7 @@ def train_single(
     data_params,
     setup_params,
     model_params,
+    swa=None,
 ):
     """Train a single model"""
 
@@ -30,7 +31,7 @@ def train_single(
         val_generator = None
 
     model, criterion, optimizer, scheduler, normalizer = init_model(
-        model_class, model_dir, model_params, **setup_params
+        model_class, model_dir, model_params, swa=swa, **setup_params
     )
 
     if model.task == "regression":

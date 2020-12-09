@@ -40,6 +40,7 @@ def main(
     batch_size=128,
     workers=0,
     device=torch.device("cpu"),
+    swa=None,
     **kwargs,
 ):
     assert (
@@ -160,6 +161,7 @@ def main(
             data_params=data_params,
             setup_params=setup_params,
             model_params=model_params,
+            swa=swa,
         )
 
     if evaluate:

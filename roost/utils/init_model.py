@@ -2,6 +2,7 @@ from os.path import isfile, relpath
 
 import torch
 from torch.nn import CrossEntropyLoss, L1Loss, MSELoss, NLLLoss
+from torch.optim.swa_utils import SWALR, AveragedModel
 
 from roost.core import Normalizer, RobustL1Loss, RobustL2Loss
 from roost.segments import ResidualNet
@@ -22,6 +23,7 @@ def init_model(
     gamma=0.3,
     fine_tune=None,
     transfer=None,
+    swa=False,
 ):
 
     task = model_params["task"]
@@ -135,6 +137,22 @@ def init_model(
         scheduler.load_state_dict(checkpoint["scheduler"])
         if normalizer is not None:
             normalizer.load_state_dict(checkpoint["normalizer"])
+
+        if "swa" in checkpoint.keys():
+            model.swa = checkpoint["swa"]
+
+            model_dict = model.swa["model_state_dict"]
+            model.swa["model"] = AveragedModel(model)
+            model.swa["model"].load_state_dict(model_dict)
+
+            scheduler_dict = model.swa["scheduler_state_dict"]
+            model.swa["scheduler"] = SWALR(optimizer, model.swa["lr"])
+            model.swa["scheduler"].load_state_dict(scheduler_dict)
+
+    elif swa:  # setup SWA from scratch, i.e. no previous run to load
+        swa["model"] = AveragedModel(model)
+        swa["scheduler"] = SWALR(optimizer, swa_lr=swa["lr"])
+        model.swa = swa
 
     num_param = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"\nTotal Number of Trainable Parameters: {num_param:,}")

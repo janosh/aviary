@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 from sklearn.metrics import r2_score
+from torch.optim.swa_utils import AveragedModel
 from torch.utils.data import DataLoader
 
 from roost.core import Normalizer
@@ -25,6 +26,13 @@ def predict(model_class, test_set, checkpoint_path, device, robust, repeat):
 
     normalizer = Normalizer()
     normalizer.load_state_dict(checkpoint["normalizer"])
+
+    if "swa" in checkpoint.keys():
+        model.swa = checkpoint["swa"]
+
+        model_dict = model.swa["model_state_dict"]
+        model.swa["model"] = AveragedModel(model)
+        model.swa["model"].load_state_dict(model_dict)
 
     idx, comp, y_test, output = model.predict(test_set, repeat=repeat)
 

@@ -31,8 +31,8 @@ class BaseModel(nn.Module, ABC):
     @interruptable
     def fit(
         self,
-        train_set,
-        val_set,
+        train_loader,
+        val_loader,
         optimizer,
         scheduler,
         epochs,
@@ -47,29 +47,29 @@ class BaseModel(nn.Module, ABC):
         for epoch in range(start_epoch, start_epoch + epochs):
             self.epoch += 1
             # Training
+            print(f"Epoch: [{epoch}/{start_epoch + epochs - 1}]")
             train_metrics = self.evaluate(
-                train_set, criterion, optimizer, normalizer, "train", verbose
+                train_loader, criterion, optimizer, normalizer, "train", verbose
             )
 
             if verbose:
-                print(f"Epoch: [{epoch}/{start_epoch + epochs - 1}]")
-                metric_str = "\t".join(
+                metric_str = "\t ".join(
                     f"{key} {val:.3f}" for key, val in train_metrics.items()
                 )
                 print(f"Train      : {metric_str}")
 
             # Validation
-            if val_set is None:
+            if val_loader is None:
                 is_best = False
             else:
                 with torch.no_grad():
-                    # evaluate on validation set
+                    # Evaluate on validation set
                     val_metrics = self.evaluate(
-                        val_set, criterion, None, normalizer, action="val"
+                        val_loader, criterion, None, normalizer, action="val"
                     )
 
                 if verbose:
-                    metric_str = "\t".join(
+                    metric_str = "\t ".join(
                         f"{key} {val:.3f}" for key, val in val_metrics.items()
                     )
                     print(f"Validation : {metric_str}")
@@ -95,8 +95,17 @@ class BaseModel(nn.Module, ABC):
                     "optimizer": optimizer.state_dict(),
                     "scheduler": scheduler.state_dict(),
                 }
+
                 if self.task == "regression":
-                    checkpoint_dict.update({"normalizer": normalizer.state_dict()})
+                    checkpoint_dict["normalizer"] = normalizer.state_dict()
+
+                if hasattr(self, "swa"):
+                    checkpoint_dict["swa"] = self.swa.copy()
+                    for key in ["model", "scheduler"]:
+                        # remove model as it can't and needs not be serialized
+                        del checkpoint_dict["swa"][key]
+                        state_dict = self.swa[key].state_dict()
+                        checkpoint_dict["swa"][f"{key}_state_dict"] = state_dict
 
                 save_checkpoint(checkpoint_dict, is_best, model_dir)
 
@@ -104,17 +113,26 @@ class BaseModel(nn.Module, ABC):
                 for metric, val in train_metrics.items():
                     writer.add_scalar(f"training/{metric}", val, epoch + 1)
 
-                if val_set is not None:
+                if val_loader is not None:
                     for metric, val in val_metrics.items():
                         writer.add_scalar(f"validation/{metric}", val, epoch + 1)
 
-            scheduler.step()
+            if hasattr(self, "swa") and epoch > self.swa["start"]:
+                self.swa["model"].update_parameters(self)
+                self.swa["scheduler"].step()
+            else:
+                scheduler.step()
 
             # catch memory leak
             gc.collect()
 
+        # if self.swa:
+        #     # handle batch norm + SWA (does nothing if model has no batch norm)
+        #     currently incompatible (https://github.com/pytorch/pytorch/issues/49082)
+        #     torch.optim.swa_utils.update_bn(train_loader, self.swa["model"])
+
     def evaluate(
-        self, generator, criterion, optimizer, normalizer, action="train", verbose=False
+        self, loader, criterion, optimizer, normalizer, action="train", verbose=False
     ):
         """ Evaluate the model for one epoch """
 
@@ -125,7 +143,7 @@ class BaseModel(nn.Module, ABC):
         metrics = {"loss": [], "mae": [], "rmse": [], "acc": [], "f1": []}
 
         # we do not need batch_comp or batch_ids when training
-        for input_, target, *_ in tqdm(generator, disable=not verbose):
+        for input_, target, *_ in tqdm(loader, disable=not verbose):
 
             # move tensors to GPU
             input_ = (tensor.to(self.device) for tensor in input_)
@@ -189,6 +207,7 @@ class BaseModel(nn.Module, ABC):
 
         # Ensure model is in evaluation mode
         self.eval()
+        model = self.swa["model"] if hasattr(self, "swa") else self
 
         # iterate over mini-batches
         for input_, target, comps, ids in tqdm(generator, disable=not verbose):
@@ -197,7 +216,7 @@ class BaseModel(nn.Module, ABC):
             input_ = (t.to(self.device) for t in input_)
 
             # compute output
-            output = self(*input_, repeat=repeat)
+            output = model(*input_, repeat=repeat)
 
             # collect the model outputs
             test_ids += ids

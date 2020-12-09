@@ -9,6 +9,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
     roc_auc_score,
 )
+from torch.optim.swa_utils import AveragedModel
 from torch.utils.data import DataLoader
 
 from roost.core import sampled_softmax
@@ -27,6 +28,13 @@ def predict(model_class, test_set, checkpoint_path, device, robust):
     model = model_class(**checkpoint["model_params"], device=device)
     model.to(device)
     model.load_state_dict(checkpoint["state_dict"])
+
+    if "swa" in checkpoint.keys():
+        model.swa = checkpoint["swa"]
+
+        model_dict = model.swa["model_state_dict"]
+        model.swa["model"] = AveragedModel(model)
+        model.swa["model"].load_state_dict(model_dict)
 
     idx, comp, y_test, output = model.predict(test_set)
 
