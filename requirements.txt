@@ -7,6 +7,9 @@ matplotlib
 torch_scatter
 pandas
 scikit_learn
-pytest
 tensorboard
 pyyaml
+
+# dev dependencies
+pytest
+pytest-timeout
