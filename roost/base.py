@@ -8,7 +8,7 @@ from torch import nn
 from torch.nn.functional import softmax
 from tqdm import tqdm
 
-from roost.utils import interruptable
+from roost.utils import interruptable, pearsonr
 
 from .core import sampled_softmax, save_checkpoint
 
@@ -140,7 +140,9 @@ class BaseModel(nn.Module, ABC):
         self.train() if action == "train" else self.eval()
 
         # records both regr. and clf. metrics for an epoch to compute averages below
-        metrics = {"loss": [], "mae": [], "rmse": [], "acc": [], "f1": []}
+        metrics = ["loss", "mae", "rmse", "acc", "f1"]
+        metrics += ["mae_std_al_ae", "std_al_mean", "pearson_std_al_vs_ae"]
+        metrics = {key: [] for key in metrics}
 
         # we do not need batch_comp or batch_ids when training
         for input_, target, *_ in tqdm(loader, disable=not verbose):
@@ -159,14 +161,17 @@ class BaseModel(nn.Module, ABC):
                     loss = criterion(mean, log_std, target_norm)
 
                     pred = normalizer.denorm(mean.data.cpu())
-                    std_al = normalizer.std * log_std.exp().data.cpu()
-                    ae = (target - pred).abs()
+                    std_al = normalizer.std * log_std.exp().data.cpu().squeeze()
+                    ae = (target - pred).abs().squeeze()
+                    metrics["std_al_mean"].append(std_al.mean())
+                    metrics["mae_std_al_ae"].append((std_al - ae).abs().mean())
+                    metrics["pearson_std_al_vs_ae"].append(pearsonr(std_al, ae).numpy())
                 else:
                     loss = criterion(output, target_norm)
                     pred = normalizer.denorm(output.data.cpu())
 
                 metrics["mae"].append((pred - target).abs().mean())
-                metrics["rmse"].append(((pred - target) ** 2).mean() ** 0.5)
+                metrics["rmse"].append((pred - target).pow(2).mean().sqrt())
 
             else:  # classification
                 target = target.to(self.device).squeeze()
