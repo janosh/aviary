@@ -1,6 +1,7 @@
 from os.path import isfile, relpath
 
 import torch
+import yaml
 from torch.nn import CrossEntropyLoss, L1Loss, MSELoss, NLLLoss
 from torch.optim.swa_utils import SWALR, AveragedModel
 
@@ -18,7 +19,7 @@ def init_model(
     learning_rate,
     weight_decay,
     momentum,
-    device=torch.device("cpu"),
+    device="cpu",
     milestones=[],
     gamma=0.3,
     fine_tune=None,
@@ -34,7 +35,6 @@ def init_model(
         checkpoint = torch.load(model_path, map_location=device)
 
         model = model_class(**checkpoint["model_params"], device=device)
-        model.to(device)
         model.load_state_dict(checkpoint["state_dict"])
 
         if model.task != task:
@@ -88,8 +88,6 @@ def init_model(
         print(bold("Training a new model from scratch"))
         print(f"Checkpoint will be saved to '{bold(relpath(model_path))}'")
         model = model_class(device=device, **model_params)
-
-        model.to(device)
 
     # Select optimizer
     valid_optims = ["SGD", "Adam", "AdamW"]
@@ -148,5 +146,9 @@ def init_model(
     print(f"\nTotal Number of Trainable Parameters: {num_param:,}")
 
     model.to(device)
+
+    # append mode ('a') will create file if not exists
+    with open(model_dir + "/cli_args.yml", "a") as file:
+        yaml.dump({"model_params": model.model_params}, file, default_flow_style=None)
 
     return model, criterion, optimizer, scheduler, normalizer

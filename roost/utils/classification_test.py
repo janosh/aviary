@@ -66,7 +66,7 @@ def classification_test(
     test_set,
     data_params,
     robust,
-    device=torch.device("cpu"),
+    device="cpu",
     eval_type="checkpoint",
 ):
     """Evaluate an ensemble's performance on the test set"""

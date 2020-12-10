@@ -7,8 +7,9 @@ from roost.utils import bold, make_model_dir
 
 
 def add_common_args(parser):
-    """This function requires that the provided parser already has
-    a model_name defined on it to make the model's directory.
+    """
+    This function requires the provided parser already having
+    a model_name to make the model's directory.
     """
 
     add_test_val_args(parser)
@@ -25,9 +26,9 @@ def add_common_args(parser):
     assert args.task in ["regression", "classification"], task_err
 
     if torch.cuda.is_available() and (not args.disable_cuda):
-        args.device = torch.device("cuda")
+        args.device = "cuda"
     else:
-        args.device = torch.device("cpu")
+        args.device = "cpu"
 
     args.model_dir = make_model_dir(args.model_name, args.ensemble, args.run_id)
 

@@ -63,7 +63,7 @@ def regression_test(
     test_set,
     data_params,
     robust,
-    device=torch.device("cpu"),
+    device="cpu",
     eval_type="checkpoint",
     repeat=1,  # use with MNF to get epistemic uncertainty
 ):

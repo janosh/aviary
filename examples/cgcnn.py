@@ -39,7 +39,7 @@ def main(
     weight_decay=1e-6,
     batch_size=128,
     workers=0,
-    device=torch.device("cpu"),
+    device="cpu",
     swa=None,
     **kwargs,
 ):

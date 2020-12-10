@@ -11,9 +11,7 @@ setup_params = {
     "learning_rate": 3e-4,
     "weight_decay": 1e-6,
     "momentum": 0.9,
-    "device": torch.device("cuda")
-    if torch.cuda.is_available()
-    else torch.device("cpu"),
+    "device": "cpu",
 }
 
 
