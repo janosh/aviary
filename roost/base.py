@@ -242,7 +242,7 @@ class BaseModel(nn.Module, ABC):
         this runs only the message-passing part of the model without the ResidualNet.
 
         Args:
-            generator (DataLoader): PyTorch loader with the same data format used in fit()
+            generator (DataLoader): PyTorch loader with same data format used in fit()
 
         Returns:
             np.array: 2d array of features

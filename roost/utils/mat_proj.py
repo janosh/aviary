@@ -10,8 +10,8 @@ API_KEY = "X2UaF2zkPMcFhpnMN"
 
 
 def fetch_mp(criteria={}, properties=[], save_to=None):
-    """
-    Fetch data from the Materials Project (MP). Docs at https://docs.materialsproject.org.
+    """Fetch data from the Materials Project (MP).
+    Docs at https://docs.materialsproject.org.
     Pymatgen MP source at https://pymatgen.org/_modules/pymatgen/ext/matproj.
 
     Note: Unlike ICSD - a database of materials that actually exist - MP has
@@ -24,7 +24,8 @@ def fetch_mp(criteria={}, properties=[], save_to=None):
             satisfy, e.g. criteria = {"material_id": {"$in": ["mp-7988", "mp-69"]}}.
             Supports all features of the Mongo query syntax.
         properties (list, optional): quantities of interest, can be selected from
-            https://materialsproject.org/docs/api#resources_1 or MPRester().supported_properties.
+            https://materialsproject.org/docs/api#resources_1
+            or MPRester().supported_properties.
         save_to (str, optional): Pass a file path to save the data returned by MP
             API as CSV. Defaults to None.
 

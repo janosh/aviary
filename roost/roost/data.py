@@ -67,24 +67,24 @@ class CompositionData(Dataset):
         cry_id: torch.Tensor shape (1,)
             input id for the material
         """
-        cry_id, composition, target = self.df.iloc[idx]
+        cry_id, comp, target = self.df.iloc[idx]
 
         # get_el_amt_dict: get element symbol and (unreduced) amount e.g. {Fe: 4, O: 6}
-        elements, weights = zip(*Composition(composition).get_el_amt_dict().items())
+        elements, weights = zip(*Composition(comp).get_el_amt_dict().items())
 
         weights = np.atleast_2d(weights).T / np.sum(weights)
-        assert len(elements) != 1, f"cry-id {cry_id} [{composition}] is a pure system"
+        assert len(elements) != 1, f"cry-id {cry_id} [{comp}] is a pure system"
         try:
             atom_fea = np.vstack(
                 [self.elem_features.get_fea(element) for element in elements]
             )
         except AssertionError:
             raise AssertionError(
-                f"cry-id {cry_id} [{composition}] contains element types not in embedding"
+                f"cry-id {cry_id} [{comp}] contains element types not in embedding"
             )
         except ValueError:
             raise ValueError(
-                f"cry-id {cry_id} [{composition}] composition cannot be parsed into elements"
+                f"cry-id {cry_id} [{comp}] composition cannot be parsed into elements"
             )
 
         env_idx = list(range(len(elements)))
@@ -102,13 +102,13 @@ class CompositionData(Dataset):
         nbr_fea_idx = torch.LongTensor(nbr_fea_idx)
         if self.task == "regression":
             targets = torch.Tensor([float(target)])
-        elif self.task == "classification":
+        else:  # classification
             targets = torch.LongTensor([target])
 
         return (
             (atom_weights, atom_fea, self_fea_idx, nbr_fea_idx),
             targets,
-            composition,
+            comp,
             cry_id,
         )
 

@@ -1,4 +1,18 @@
-# RooSt &nbsp; [![Tests](https://github.com/janosh/roost/workflows/Tests/badge.svg)](https://github.com/janosh/roost/actions) [![License](https://img.shields.io/github/license/janosh/roost?label=License)](/license) ![GitHub Repo Size](https://img.shields.io/github/repo-size/janosh/roost?label=Repo+Size) ![GitHub last commit](https://img.shields.io/github/last-commit/janosh/roost?label=Last+Commit)
+<p align="center">
+ <img src=".github/aviary.svg" alt="Aviary" height=175>
+</p>
+
+<h1 align="center">Roost</h1>
+
+<h4 align="center">
+
+[![Tests](https://github.com/janosh/roost/workflows/Tests/badge.svg)](https://github.com/janosh/roost/actions)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/janosh/roost/master.svg)](https://results.pre-commit.ci/latest/github/janosh/roost/master)
+[![License](https://img.shields.io/github/license/janosh/roost?label=License)](/license)
+[![GitHub Repo Size](https://img.shields.io/github/repo-size/janosh/roost?label=Repo+Size)](https://github.com/janosh/roost/graphs/contributors)
+[![GitHub last commit](https://img.shields.io/github/last-commit/janosh/roost?label=Last+Commit)](https://github.com/janosh/roost/commits)
+
+</h4>
 
 **R**epresentati**o**n Learning fr**o**m **St**oichiometry
 
@@ -6,7 +20,7 @@
 
 In materials discovery applications often we know the composition of trial materials but have little knowledge about the structure.
 
-Many current SOTA results within the field of machine learning for materials discovery are reliant on knowledge of the structure of the material. This means that such models can only be applied to systems that have undergone structural characterisation. As structural characterisation is a time-consuming process whether done experimentally or via the use of ab-initio methods the use of structures as our model inputs is a prohibitive bottleneck to many materials screening applications we would like to pursue.
+Many current SOTA results within the field of machine learning for materials discovery are reliant on knowledge of the structure of the material. This means that such models can only be applied to systems that have undergone structural characterization. As structural characterization is a time-consuming process whether done experimentally or via the use of ab-initio methods the use of structures as our model inputs is a prohibitive bottleneck to many materials screening applications we would like to pursue.
 
 One approach for avoiding the structure bottleneck is to develop models that learn from the stoichiometry alone. In this work, we show that via a novel recasting of how we view the stoichiometry of a material we can leverage a message-passing neural network to learn materials properties whilst remaining agnostic to the structure. The proposed model exhibits increased sample efficiency compared to more widely used descriptor-based approaches. This work draws inspiration from recent progress in using graph-based methods for the study of small molecules and crystalline materials.
 
@@ -106,3 +120,13 @@ The open-source implementation of `cgcnn` available [here](https://github.com/tx
 ## Disclaimer
 
 This is research code shared without support or any guarantee on its quality. However, please do raise an issue or submit a pull request if you spot something wrong or that could be improved and I will try my best to solve it.
+
+## To Do
+
+Parallelize the code over multiple GPUs. Currently `DataParallel` crashes as subsets of the batch have different sizes due to the use of lists of lists rather than zero-padding.
+
+```py
+if (n_gpus := torch.cuda.device_count() > 1) and (device in ["cuda", torch.device("cuda")]):
+    print(f"Running on {n_gpus} GPUs")
+    model = nn.DataParallel(model)
+```

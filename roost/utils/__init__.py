@@ -35,9 +35,7 @@ def pearsonr(x, y):
     Mimics `scipy.stats.pearsonr`. x and y assumed to be 1d tensors.
     Returns the Pearson correlation coefficient (float tensor) between x and y.
 
-    Scipy docs: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.pearsonr.html
-
-    Scipy code: https://github.com/scipy/scipy/blob/v0.19.0/scipy/stats/stats.py#L2975-L3033
+    Scipy docs: http://tiny.cc/gcq6tz
 
     Example:
         >>> x = np.random.randn(100)
