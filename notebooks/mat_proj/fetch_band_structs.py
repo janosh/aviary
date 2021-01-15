@@ -5,6 +5,7 @@ import pickle
 import sys
 
 import pandas as pd
+from pymatgen.electronic_structure.plotter import BSDOSPlotter
 from pymatgen.ext.matproj import MPRester, MPRestError
 from tqdm import tqdm
 
@@ -15,8 +16,8 @@ mpr = MPRester(API_KEY)
 mp_version = mpr.get_database_version()
 print("MP version:", mp_version)
 
-save_dir = f"{ROOT}/data/datasets/bandstructs"
-os.makedirs(save_dir, exist_ok=True)
+DIR = f"{ROOT}/data/datasets/bandstructs"
+os.makedirs(DIR, exist_ok=True)
 
 
 # %% [markdown]
@@ -32,7 +33,7 @@ mp_ids = fetch_mp({"nelements": 2}, ["pretty_formula"]).rename(
 # %%
 # mp_ids.to_csv(f"{save_dir}/mp_binary_ids_db@{mp_version}.csv")
 mp_ids = pd.read_csv(
-    f"{save_dir}/mp_binary_ids_db@{mp_version}.csv", index_col="material_id"
+    f"{DIR}/mp_binary_ids_db@{mp_version}.csv", index_col="material_id"
 )
 
 
@@ -45,24 +46,22 @@ mp_ids = pd.read_csv(
 # (eq. to space groups 195 to 230) and 5 or less elements
 spacegroups = fetch_mp(
     {"nelements": {"$lte": 5}, "spacegroup.crystal_system": "cubic"},
-    ["pretty_formula", "spacegroup"],
-).rename(columns={"pretty_formula": "formula"})
-
-
-# %%
-# extract relevant data from spacegroup dict into individual columns
-for col in ["number", "crystal_system", "symbol"]:
-    spacegroups[col] = spacegroups.spacegroup.apply(lambda x: x[col])
-spacegroups = spacegroups.drop(columns=["spacegroup"]).rename(
-    columns={"number": "spacegroup_number"}
+    ["pretty_formula", "spacegroup.number", "spacegroup.crystal_system"],
+).rename(
+    columns={
+        "pretty_formula": "formula",
+        "spacegroup.number": "spacegroup",
+        "spacegroup.crystal_system": "crystal_system",
+    }
 )
+
 
 # %%
 # save all materials with 5 or less elements along with
 # their crystal system and and spacegroup number to csv
-# spacegroups.to_csv(f"{save_dir}/mp_spacegroups_nelements<6_db@{mp_version}.csv")
+# spacegroups.to_csv(f"{save_dir}/cubic_spacegroups_nelements<6_db@{mp_version}.csv")
 spacegroups = pd.read_csv(
-    f"{save_dir}/mp_spacegroups_nelements<6_db@2020_09_08.csv",
+    f"{DIR}/cubic_spacegroups_nelements<6_db@2020_09_08.csv",
     index_col="material_id",
 )
 
@@ -80,6 +79,11 @@ spacegroups.value_counts("spacegroup_number")
 bs = mpr.get_bandstructure_by_material_id("mp-985582")
 bs_dict = bs.as_dict()
 
+
+# %%
+BSDOSPlotter().get_plot(bs)
+
+
 # the largest storage requirement comes from bs.projections
 # which we don't need so we delete it
 for key in bs_dict.keys():
@@ -95,7 +99,7 @@ n_ids = len(subset)
 percent = -1
 
 for idx, (id, formula) in enumerate(subset.iteritems()):
-    file_path = f"{save_dir}/{id}:{formula}.zip"
+    file_path = f"{DIR}/zip/{id}:{formula}.zip"
     if idx * 100 // n_ids > percent:
         percent = idx * 100 // n_ids
         print(f"{percent}%")
@@ -137,7 +141,7 @@ for idx, (id, formula) in enumerate(subset.iteritems()):
 
 # %%
 # save comments column, allows skipping throwing or null entries next time
-spacegroups.to_csv(f"{save_dir}/mp_spacegroups_nelements<6_db@{mp_version}.csv")
+spacegroups.to_csv(f"{DIR}/cubic_spacegroups_nelements<6_db@{mp_version}.csv")
 
 
 # %%
@@ -145,11 +149,11 @@ spacegroups.to_csv(f"{save_dir}/mp_spacegroups_nelements<6_db@{mp_version}.csv")
 mp_ids["is_metal"] = None
 
 for id, formula in tqdm(mp_ids.formula.head(100).iteritems()):
-    file_path = f"{save_dir}/{id}:{formula}.zip"
+    file_path = f"{DIR}/zip/{id}:{formula}.zip"
 
     if os.path.isfile(file_path):
 
-        with gzip.open(f"{save_dir}/{id}:{formula}.zip", "rb") as file:
+        with gzip.open(file_path, "rb") as file:
             bs = pickle.loads(file.read())
 
         mp_ids.is_metal.loc[id] = bs["is_metal"]
