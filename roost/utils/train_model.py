@@ -40,7 +40,7 @@ def train_single(
         )
         if normalizer.mean is None:  # normalizer hasn't been fit yet
             normalizer.fit(sample_target)
-        print(f"Dummy MAE: {(sample_target-normalizer.mean).abs().mean():.4f}")
+        print(f"Dummy MAE: {(sample_target - normalizer.mean).abs().mean():.4f}")
 
     if log:
         now = f"{datetime.now():%d-%m-%Y_%H-%M-%S}"

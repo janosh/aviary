@@ -33,7 +33,7 @@ class CrystalGraphConvNet(BaseModel):
         Parameters
         ----------
 
-        orig_elem_fea_len: int
+        elem_fea_len: int
             Number of atom features in the input.
         nbr_fea_len: int
             Number of bond features.
@@ -86,7 +86,7 @@ class CrystalGraphConvNet(BaseModel):
         Parameters
         ----------
 
-        atom_fea: Variable(torch.Tensor) shape (N, orig_elem_fea_len)
+        atom_fea: Variable(torch.Tensor) shape (N, elem_fea_len)
             Atom features from atom type
         nbr_fea: Variable(torch.Tensor) shape (N, M, nbr_fea_len)
             Bond features of each atom's M neighbors

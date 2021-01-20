@@ -60,7 +60,7 @@ class DescriptorNetwork(nn.Module):
         ----------
         elem_weights: Variable(torch.Tensor) shape (N)
             Fractional weight of each Element in its stoichiometry
-        elem_fea: Variable(torch.Tensor) shape (N, orig_elem_fea_len)
+        elem_fea: Variable(torch.Tensor) shape (N, elem_fea_len)
             Element features of each of the N elems in the batch
         self_fea_idx: torch.Tensor shape (M,)
             Indices of the first element in each of the M pairs

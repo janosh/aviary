@@ -142,8 +142,7 @@ def init_model(
         swa["scheduler"] = SWALR(optimizer, swa_lr=swa["lr"])
         model.swa = swa
 
-    num_param = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"\nTotal Number of Trainable Parameters: {num_param:,}")
+    print(f"\nTotal number of trainable parameters: {model.n_params:,}")
 
     model.to(device)
 

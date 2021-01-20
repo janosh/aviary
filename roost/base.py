@@ -28,6 +28,10 @@ class BaseModel(nn.Module, ABC):
         self.val_score_name = "MAE" if task == "regression" else "Acc"
         self.model_params = {}
 
+    @property
+    def n_params(self, trainable=True):
+        return sum(p.numel() for p in self.parameters() if p.requires_grad is trainable)
+
     @interruptable
     def fit(
         self,
@@ -47,7 +51,8 @@ class BaseModel(nn.Module, ABC):
         for epoch in range(start_epoch, start_epoch + epochs):
             self.epoch += 1
             # Training
-            print(f"Epoch: [{epoch}/{start_epoch + epochs - 1}]")
+            print(f"\nEpoch: [{epoch}/{start_epoch + epochs - 1}]", flush=True)
+            # flush print to avoid interference with tqdm progress bar
             train_metrics = self.evaluate(
                 train_loader, criterion, optimizer, normalizer, "train", verbose
             )
@@ -163,15 +168,15 @@ class BaseModel(nn.Module, ABC):
                     pred = normalizer.denorm(mean.data.cpu())
                     std_al = normalizer.std * log_std.exp().data.cpu().squeeze()
                     ae = (target - pred).abs().squeeze()
-                    metrics["std_al_mean"].append(std_al.mean())
-                    metrics["mae_std_al_ae"].append((std_al - ae).abs().mean())
-                    metrics["pearson_std_al_vs_ae"].append(pearsonr(std_al, ae).numpy())
+                    metrics["std_al_mean"] += [std_al.mean()]
+                    metrics["mae_std_al_ae"] += [(std_al - ae).abs().mean()]
+                    metrics["pearson_std_al_vs_ae"] += [pearsonr(std_al, ae).numpy()]
                 else:
                     loss = criterion(output, target_norm)
                     pred = normalizer.denorm(output.data.cpu())
 
-                metrics["mae"].append((pred - target).abs().mean())
-                metrics["rmse"].append((pred - target).pow(2).mean().sqrt())
+                metrics["mae"] += [(pred - target).abs().mean()]
+                metrics["rmse"] += [(pred - target).pow(2).mean().sqrt()]
 
             else:  # classification
                 target = target.to(self.device).squeeze()
@@ -182,14 +187,14 @@ class BaseModel(nn.Module, ABC):
                 else:
                     loss = criterion(output, target)
                     logits = softmax(output, dim=1)
-                metrics["acc"].append((logits.argmax(1) == target).float().mean().cpu())
+                metrics["acc"] += [(logits.argmax(1) == target).float().mean().cpu()]
 
                 # call .cpu() for automatic numpy conversion
                 # since sklearn metrics need numpy arrays
                 f1 = f1_score(logits.argmax(1).cpu(), target.cpu(), average="weighted")
-                metrics["f1"].append(f1)
+                metrics["f1"] += [f1]
 
-            metrics["loss"].append(loss.cpu().item())
+            metrics["loss"] += [loss.cpu().item()]
 
             if action == "train":
                 # compute gradient and take an optimizer step
@@ -197,7 +202,7 @@ class BaseModel(nn.Module, ABC):
                 loss.backward()
                 optimizer.step()
 
-        metrics = {key: np.array(val).mean() for key, val in metrics.items() if val}
+        metrics = {key: sum(val) / len(val) for key, val in metrics.items() if val}
 
         return metrics
 
