@@ -19,12 +19,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Checkout MNF repo
-        uses: actions/checkout@v2
-        with:
-          repository: janosh/torch-mnf
-          path: torch-mnf
-
       - name: Set up latest Python 3
         uses: actions/setup-python@v2
         with:
@@ -32,14 +26,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # install torch first as torch_scatter needs it, torchvision for torch-mnf
-          pip install torch==1.7.0+cpu torchvision==0.8.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          # install torch first as torch_scatter needs it
+          pip install torch==1.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
           pip install torch-scatter -f https://pytorch-geometric.com/whl/torch-1.7.0+cpu.html
           pip install -r requirements.txt
           pip install .
-          pip install seaborn # required by torch-mnf
-          pip install -e $GITHUB_WORKSPACE/torch-mnf
 
       - name: Run Tests
         run: |
-          python -m pytest --ignore=torch-mnf
+          python -m pytest

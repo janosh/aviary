@@ -13,7 +13,7 @@ from . import get_params
 
 
 @pytest.mark.timeout(15)
-def test_roostclassification_robust():
+def test_roost_classification_robust():
 
     task = "classification"
     data_file = "bandgap-binary.csv"
@@ -23,7 +23,7 @@ def test_roostclassification_robust():
         Roost, task, CompositionData, collate_batch, data_file, emb_file
     )
 
-    model_name = "tests/test_roostclassification_robust"
+    model_name = "tests/test_roost_classification_robust"
     model_dir = make_model_dir(model_name)
     train_kwargs["model_dir"] = model_dir
 
@@ -56,7 +56,7 @@ def test_roostclassification_robust():
 
 
 @pytest.mark.timeout(10)
-def test_roostregression_robust():
+def test_roost_regression_robust():
 
     task = "regression"
     data_file = "expt-non-metals.csv"
@@ -65,7 +65,7 @@ def test_roostregression_robust():
     train_kwargs, data_params, test_set = get_params(
         Roost, task, CompositionData, collate_batch, data_file, emb_file
     )
-    model_name = "tests/test_roostregression_robust"
+    model_name = "tests/test_roost_regression_robust"
     model_dir = make_model_dir(model_name)
     train_kwargs["model_dir"] = model_dir
 
@@ -106,7 +106,7 @@ def test_train_individually_evaluate_ensemble():
     train_kwargs, data_params, test_set = get_params(
         Roost, task, CompositionData, collate_batch, data_file, emb_file
     )
-    model_name = "tests/test_single_roostregression_robust"
+    model_name = "tests/test_single_roost_regression_robust"
     model_dir = make_model_dir(model_name, ensemble=2)
 
     for run_id in ["ens_0", "ens_1"]:

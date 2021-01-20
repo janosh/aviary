@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from aviary.core import Normalizer
 
 
-def predict(model_class, test_set, checkpoint_path, device, robust, repeat):
+def predict(model_class, test_set, checkpoint_path, device, robust):
 
     assert isfile(checkpoint_path), f"no checkpoint found at '{checkpoint_path}'"
     checkpoint = torch.load(checkpoint_path, map_location=device)
@@ -34,23 +34,16 @@ def predict(model_class, test_set, checkpoint_path, device, robust, repeat):
         model.swa["model"] = AveragedModel(model)
         model.swa["model"].load_state_dict(model_dict)
 
-    idx, comp, y_test, output = model.predict(test_set, repeat=repeat)
+    idx, comp, y_test, output = model.predict(test_set)
 
     df = pd.DataFrame({"idx": idx, "comp": comp, "y_test": y_test})
 
     output = output.cpu().squeeze()  # move preds to CPU in case model ran on GPU
     if robust:
         mean, log_std_al = [x.squeeze() for x in output.chunk(2, dim=1)]
-        if repeat > 1:
-            log_std_al = log_std_al.mean(-1)
-            df["std_ep"] = (mean.std(-1) * normalizer.std).numpy()
-            mean = mean.mean(-1)
         df["pred"] = normalizer.denorm(mean).numpy()
         df["std_al"] = (log_std_al.exp() * normalizer.std).numpy()
     else:
-        if repeat > 1:
-            df["std_ep"] = (output.std(-1) * normalizer.std).numpy() * 100
-            output = output.mean(-1)
         df["pred"] = normalizer.denorm(output).numpy()
 
     return df
@@ -65,7 +58,6 @@ def regression_test(
     robust,
     device="cpu",
     eval_type="checkpoint",
-    repeat=1,  # use with MNF to get epistemic uncertainty
 ):
     """Evaluate an ensemble's performance on the test set"""
 
@@ -81,7 +73,7 @@ def regression_test(
         else:
             checkpoint_path = f"{model_dir}/{eval_type}.pth.tar"
 
-        df_i = predict(model_class, test_set, checkpoint_path, device, robust, repeat)
+        df_i = predict(model_class, test_set, checkpoint_path, device, robust)
 
         preds.append(df_i.pred)
 

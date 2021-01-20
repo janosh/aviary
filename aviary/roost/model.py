@@ -1,6 +1,3 @@
-import torch
-from tqdm import trange
-
 from aviary.base import BaseModel
 from aviary.segments import ResidualNet
 
@@ -33,7 +30,6 @@ class Roost(BaseModel):
         cry_gate=[256],
         cry_msg=[256],
         out_hidden=[1024, 512, 256, 128, 64],
-        use_mnf=False,
         **kwargs
     ):
         super().__init__(task=task, robust=robust, n_targets=n_targets, **kwargs)
@@ -57,30 +53,20 @@ class Roost(BaseModel):
             "robust": robust,
             "n_targets": n_targets,
             "out_hidden": out_hidden,
-            "use_mnf": use_mnf,
         }
         self.model_params.update({**model_params, **desc_dict})
 
         # define an output neural network
         output_dim = 2 * n_targets if self.robust else n_targets
 
-        self.output_nn = ResidualNet(
-            dims=[elem_fea_len, *out_hidden, output_dim], use_mnf=use_mnf
-        )
+        self.output_nn = ResidualNet(dims=[elem_fea_len, *out_hidden, output_dim])
 
-    def forward(
-        self, elem_weights, elem_fea, self_fea_idx, nbr_fea_idx, cry_elem_idx, repeat=1
-    ):
-        """
-        Forward pass through the material_nn and output_nn
-        """
+    def forward(self, elem_weights, elem_fea, self_fea_idx, nbr_fea_idx, cry_elem_idx):
+        """ Forward pass through the material_nn and output_nn """
+
         crys_fea = self.material_nn(
             elem_weights, elem_fea, self_fea_idx, nbr_fea_idx, cry_elem_idx
         )
 
         # apply neural network to map from learned features to target
-        if repeat > 1:
-            return torch.stack(
-                [self.output_nn(crys_fea) for _ in trange(repeat)], dim=-1
-            )
         return self.output_nn(crys_fea)

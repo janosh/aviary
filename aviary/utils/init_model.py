@@ -70,7 +70,7 @@ def init_model(
                 output_dim,
             ]
 
-            model.output_nn = ResidualNet(dims, use_mnf=model_params["use_mnf"])
+            model.output_nn = ResidualNet(dims)
         else:  # default case: resume previous training with no changes to data or model
             # TODO work out how to ensure that we are using the same optimizer
             # when resuming such that the state dictionaries do not clash.
