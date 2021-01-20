@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import torch
 
-from roost import plots
-from roost.utils import ROOT
+from aviary import plots
+from aviary.utils import ROOT
 
 # %%
 # model_name = "robust_mnf_mp"

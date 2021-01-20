@@ -12,7 +12,7 @@ from sklearn.metrics import (
 from torch.optim.swa_utils import AveragedModel
 from torch.utils.data import DataLoader
 
-from roost.core import sampled_softmax
+from aviary.core import sampled_softmax
 
 
 def predict(model_class, test_set, checkpoint_path, device, robust):

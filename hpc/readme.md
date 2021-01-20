@@ -17,7 +17,7 @@ echo var1 is '$var1' and var2 is '$var1'
 To change the job name and run time, use `sbatch -J job_name -t 1:0:0` (time format `h:m:s`). A complete example would be
 
 ```sh
-sbatch -J roost -t 1:0:0 --export CMD='python examples/roost.py --epoch 10' hpc/gpu_submit
+sbatch -J jobname -t 1:0:0 --export CMD='python examples/roost.py --epoch 10' hpc/gpu_submit
 ```
 
 ## Array Jobs
@@ -25,7 +25,7 @@ sbatch -J roost -t 1:0:0 --export CMD='python examples/roost.py --epoch 10' hpc/
 To submit an array of, say 16 jobs, use
 
 ```sh
-sbatch -J roost -t 1:0:0 --array 0-15 --export CMD="python examples/roost.py --epoch 10 --data-seed \$SLURM_ARRAY_TASK_ID" hpc/gpu_submit
+sbatch -J jobname -t 1:0:0 --array 0-15 --export CMD="python examples/roost.py --epoch 10 --data-seed \$SLURM_ARRAY_TASK_ID" hpc/gpu_submit
 ```
 
 Note the backslash in front of `\$SLURM_ARRAY_TASK_ID` which ensures the variable isn't expanded at job submission time but at execution time where it will have a value.
@@ -140,7 +140,7 @@ If the interactive window won't launch over SSH, see [vscode-python#12560](https
 To sync results back from CSD3 to your local machine, use
 
 ```sh
-rsync -av --delete login.hpc.cam.ac.uk:roost/models .
+rsync -av --delete login.hpc.cam.ac.uk:path/to/project/results .
 ```
 
 `-a`: archive mode, `-v`: increase verbosity, `--delete`: remove files from target not found in source.
@@ -155,7 +155,7 @@ Host csd3
 Then it's simply:
 
 ```sh
-rsync -av --delete csd3:roost/models .
+rsync -av --delete csd3:path/to/project/results .
 ```
 
 Add `-n` to test the command in a dry-run first. Will list each action that would have been performed.

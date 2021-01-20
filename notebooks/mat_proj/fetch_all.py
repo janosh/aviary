@@ -2,7 +2,7 @@
 import pandas as pd
 from pymatgen import MPRester
 
-from roost.utils import ROOT, fetch_mp
+from aviary.utils import ROOT, fetch_mp
 
 # %%
 id = ["material_id", "pretty_formula", "unit_cell_formula", "icsd_ids"]

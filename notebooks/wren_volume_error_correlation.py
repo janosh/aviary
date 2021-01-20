@@ -7,8 +7,8 @@ import seaborn as sns
 from scipy.stats import zscore
 from sklearn.metrics import r2_score
 
-from roost.base import ROOT
-from roost.plots import (
+from aviary.base import ROOT
+from aviary.plots import (
     count_elements,
     cum_err_cum_res,
     density_scatter_hex_with_hist,

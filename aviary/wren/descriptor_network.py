@@ -1,14 +1,14 @@
 import torch
 from torch import nn
 
-from roost.segments import MeanPooling, SimpleNet, WeightedAttentionPooling
+from aviary.segments import MeanPooling, SimpleNet, WeightedAttentionPooling
 
 from .message_layer import MessageLayer
 
 
 class DescriptorNetwork(nn.Module):
     """
-    The Descriptor Network is the message passing section of the Roost Model.
+    The Descriptor Network is the message passing section of the Wren Model.
     """
 
     def __init__(

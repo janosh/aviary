@@ -4,7 +4,7 @@ from shutil import rmtree
 import pytest
 import torch
 
-from roost.utils import make_model_dir
+from aviary.utils import make_model_dir
 
 
 @pytest.fixture(autouse=True)

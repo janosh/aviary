@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from roost.utils import init_model
+from aviary.utils import init_model
 
 
 def train_single(

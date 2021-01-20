@@ -1,3 +1,9 @@
+"""
+Calculates the standard deviation (and mean) of the first 32 bands in a material's
+brand structure. Inspired by Yunwei Zhang's idea to use the std of around 5 bands
+closest to the Fermi level to classify a material as superconductor.
+"""
+
 # %%
 import gzip
 import os
@@ -7,7 +13,7 @@ import numpy as np
 import pandas as pd
 from tqdm.std import tqdm
 
-from roost.utils import ROOT
+from aviary.utils import ROOT
 
 # %%
 DIR = f"{ROOT}/data/datasets/bandstructs"

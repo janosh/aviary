@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from roost.segments import SimpleNet, WeightedAttentionPooling
+from aviary.segments import SimpleNet, WeightedAttentionPooling
 
 
 class MessageLayer(nn.Module):

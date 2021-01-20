@@ -4,8 +4,8 @@ from argparse import ArgumentParser
 import torch
 from sklearn.model_selection import train_test_split as split
 
-from roost.roost import CompositionData, Roost, collate_batch
-from roost.utils import ROOT, make_model_dir, run_test, train_ensemble
+from aviary.roost import CompositionData, Roost, collate_batch
+from aviary.utils import ROOT, make_model_dir, run_test, train_ensemble
 
 torch.manual_seed(0)  # ensure reproducible results
 

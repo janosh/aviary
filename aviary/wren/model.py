@@ -1,7 +1,7 @@
 from torch import nn
 
-from roost.base import BaseModel
-from roost.segments import ResidualNet
+from aviary.base import BaseModel
+from aviary.segments import ResidualNet
 
 from .descriptor_network import DescriptorNetwork
 

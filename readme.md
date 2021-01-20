@@ -2,15 +2,15 @@
  <img src=".github/aviary.svg" alt="Aviary" height=175>
 </p>
 
-<h1 align="center">Roost</h1>
+<h1 align="center">Aviary</h1>
 
 <h4 align="center">
 
-[![Tests](https://github.com/janosh/roost/workflows/Tests/badge.svg)](https://github.com/janosh/roost/actions)
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/janosh/roost/master.svg)](https://results.pre-commit.ci/latest/github/janosh/roost/master)
-[![License](https://img.shields.io/github/license/janosh/roost?label=License)](/license)
-[![GitHub Repo Size](https://img.shields.io/github/repo-size/janosh/roost?label=Repo+Size)](https://github.com/janosh/roost/graphs/contributors)
-[![GitHub last commit](https://img.shields.io/github/last-commit/janosh/roost?label=Last+Commit)](https://github.com/janosh/roost/commits)
+[![Tests](https://github.com/janosh/aviary/workflows/Tests/badge.svg)](https://github.com/janosh/aviary/actions)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/janosh/aviary/master.svg)](https://results.pre-commit.ci/latest/github/janosh/aviary/master)
+[![License](https://img.shields.io/github/license/janosh/aviary?label=License)](/license)
+[![GitHub Repo Size](https://img.shields.io/github/repo-size/janosh/aviary?label=Repo+Size)](https://github.com/janosh/aviary/graphs/contributors)
+[![GitHub last commit](https://img.shields.io/github/last-commit/janosh/aviary?label=Last+Commit)](https://github.com/janosh/aviary/commits)
 
 </h4>
 
@@ -26,11 +26,11 @@ One approach for avoiding the structure bottleneck is to develop models that lea
 
 ## Environment Setup
 
-To use `roost` you need to create an environment with the correct dependencies. Using `Anaconda` this can be accomplished with the follow commands:
+To use `aviary` you need to create an environment with the correct dependencies. Using `Anaconda` this can be accomplished with the follow commands:
 
 ```bash
-conda create -n roost python
-conda activate roost
+conda create -n aviary python
+conda activate aviary
 pip install torch-scatter==latest+${CUDA} -f https://pytorch-geometric.com/whl/torch-1.5.0.html
 pip install torch scikit-learn tqdm pandas
 ```
@@ -39,14 +39,14 @@ pip install torch scikit-learn tqdm pandas
 
 You may encounter issues getting the correct installation of either `PyTorch` or `PyTorch_Scatter` for your system requirements if so please check the following pages [PyTorch](https://pytorch.org/get-started/locally/), [PyTorch-Scatter](https://github.com/rusty1s/pytorch_scatter)
 
-## Roost Setup
+## Aviary Setup
 
-Once you have setup an environment with the correct dependencies you can install `roost` using the following commands:
+Once you have setup an environment with the correct dependencies you can install `aviary` using the following commands:
 
 ```bash
-conda activate roost
-git clone https://github.com/CompRhys/roost
-cd roost
+conda activate aviary
+git clone https://github.com/CompRhys/aviary
+cd aviary
 python setup.py sdist
 pip install -e .
 ```
@@ -55,11 +55,11 @@ This will install the library in an editable state allowing for advanced users t
 
 ## Example Use
 
-In order to test your installation you can do so by running the following example from the top of your `roost` directory:
+In order to test your installation you can do so by running the following example from the top of your `aviary` directory:
 
 ```sh
-cd /path/to/roost/
-python examples/roost-example.py --train --evaluate --epochs 10
+cd /path/to/aviary/
+python examples/aviary-example.py --train --evaluate --epochs 10
 ```
 
 This command runs a default task for 10 epochs -- experimental band gap regression using the data from Zhou et al. (See `data/` folder for reference). This default task has been set up to work out of the box without any changes and to give a flavour of how the model can be used.
@@ -67,13 +67,13 @@ This command runs a default task for 10 epochs -- experimental band gap regressi
 If you want to use your own data set on a regression task this can be done with:
 
 ```sh
-python examples/roost-example.py --data-path /path/to/your/data/data.csv --train
+python examples/aviary-example.py --data-path /path/to/your/data/data.csv --train
 ```
 
 You can then test your model with:
 
 ```sh
-python examples/roost-example.py --test-path /path/to/testset.csv --evaluate
+python examples/aviary-example.py --test-path /path/to/testset.csv --evaluate
 ```
 
 The model takes input in the form csv files with materials-ids, composition strings and target values as the columns.
@@ -87,7 +87,7 @@ Basic hints about more advanced use of the model (i.e. classification, robust lo
 are available via the command:
 
 ```sh
-python examples/roost-example.py --help
+python examples/aviary-example.py --help
 ```
 
 This will output the various command-line flags that can be used to control the code.
@@ -107,11 +107,11 @@ If you use this code please cite our work for which this model was built:
 }
 ```
 
-## Work Using Roost
+## Work Using Aviary
 
 A critical examination of compound stability predictions from machine-learned formation energies [[Paper]](https://www.nature.com/articles/s41524-020-00362-y) [[arXiv]](https://arxiv.org/abs/2001.10591)
 
-If you have used Roost in your work please contact me and I will add your paper here.
+If you have used Aviary in your work please contact me and I will add your paper here.
 
 ## Acknowledgements
 

@@ -3,7 +3,7 @@ from os.path import relpath
 import torch
 import yaml
 
-from roost.utils import bold, make_model_dir
+from aviary.utils import bold, make_model_dir
 
 
 def add_common_args(parser):

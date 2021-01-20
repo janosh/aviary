@@ -1,6 +1,6 @@
 # Testing Docs
 
-Run all tests by invoking `python -m pytest` from the project's root directory. Requires that `roost` be installed as a package into the current environment (`pip install -e .`, also from the project's root). See [`setup.py`](../setup.py).
+Run all tests by invoking `python -m pytest` from the project's root directory. Requires that `aviary` be installed as a package into the current environment (`pip install -e .`, also from the project's root). See [`setup.py`](../setup.py).
 
 To run an individual test file, pass a unique identifier as argument, e.g. `python -m pytest **/test_single_regression.py`.
 

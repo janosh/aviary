@@ -3,9 +3,9 @@ import argparse
 import torch
 from sklearn.model_selection import train_test_split as split
 
+from aviary.cgcnn import CrystalGraphConvNet, CrystalGraphData, collate_batch
+from aviary.utils import bold, run_test, train_ensemble
 from examples.common_cli_args import add_common_args
-from roost.cgcnn import CrystalGraphConvNet, CrystalGraphData, collate_batch
-from roost.utils import bold, run_test, train_ensemble
 
 
 def main(

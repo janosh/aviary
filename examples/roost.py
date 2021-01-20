@@ -1,12 +1,11 @@
-# don't name this file roost.py as it will shadow the roost package/folder itself
 import argparse
 
 import torch
 from sklearn.model_selection import train_test_split as split
 
+from aviary.roost import CompositionData, Roost, collate_batch
+from aviary.utils import bold, run_test, train_ensemble
 from examples.common_cli_args import add_common_args
-from roost.roost import CompositionData, Roost, collate_batch
-from roost.utils import bold, run_test, train_ensemble
 
 
 def main(

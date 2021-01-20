@@ -5,9 +5,9 @@ import yaml
 from torch.nn import CrossEntropyLoss, L1Loss, MSELoss, NLLLoss
 from torch.optim.swa_utils import SWALR, AveragedModel
 
-from roost.core import Normalizer, RobustL1Loss, RobustL2Loss
-from roost.segments import ResidualNet
-from roost.utils.io import bold
+from aviary.core import Normalizer, RobustL1Loss, RobustL2Loss
+from aviary.segments import ResidualNet
+from aviary.utils.io import bold
 
 
 def init_model(

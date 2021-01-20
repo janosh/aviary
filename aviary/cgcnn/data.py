@@ -9,7 +9,7 @@ import torch
 from pymatgen import Structure
 from torch.utils.data import Dataset
 
-from roost.core import Featurizer
+from aviary.core import Featurizer
 
 
 class CrystalGraphData(Dataset):

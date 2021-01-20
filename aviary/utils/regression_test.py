@@ -7,7 +7,7 @@ from sklearn.metrics import r2_score
 from torch.optim.swa_utils import AveragedModel
 from torch.utils.data import DataLoader
 
-from roost.core import Normalizer
+from aviary.core import Normalizer
 
 
 def predict(model_class, test_set, checkpoint_path, device, robust, repeat):

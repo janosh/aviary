@@ -3,9 +3,9 @@ import argparse
 import torch
 from sklearn.model_selection import train_test_split as split
 
+from aviary.utils import bold, run_test, train_ensemble
+from aviary.wren import Wren, WyckoffData, collate_batch
 from examples.common_cli_args import add_common_args
-from roost.utils import bold, run_test, train_ensemble
-from roost.wren import Wren, WyckoffData, collate_batch
 
 
 def main(

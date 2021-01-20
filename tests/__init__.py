@@ -3,7 +3,7 @@ from os.path import isfile
 import torch
 from sklearn.model_selection import train_test_split as split
 
-from roost.utils import ROOT
+from aviary.utils import ROOT
 
 setup_params = {
     "loss": "L1",

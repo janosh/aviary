@@ -39,7 +39,7 @@ module load rhel7/default-peta4            # REQUIRED - loads the basic environm
 #! sbatch -J wren -t 0:5:0 --export CMD="python examples/wren.py --epoch 1" hpc/cpu_submit
 
 # --- Array Job ---
-#! sbatch -J roost -t 1:0:0 --array 0-15 --export CMD="python examples/roost_.py --epoch 50 --data-seed \$SLURM_ARRAY_TASK_ID" hpc/cpu_submit
+#! sbatch -J jobname -t 1:0:0 --array 0-15 --export CMD="python examples/roost.py --epoch 50 --data-seed \$SLURM_ARRAY_TASK_ID" hpc/cpu_submit
 #! or read the task id directly in the Python script via: task_id = int(sys.argv[1])
 
 cd $SLURM_SUBMIT_DIR

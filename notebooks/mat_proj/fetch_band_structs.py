@@ -9,7 +9,7 @@ from pymatgen.electronic_structure.plotter import BSDOSPlotter
 from pymatgen.ext.matproj import MPRester, MPRestError
 from tqdm import tqdm
 
-from roost.utils import API_KEY, ROOT, fetch_mp
+from aviary.utils import API_KEY, ROOT, fetch_mp
 
 # %%
 mpr = MPRester(API_KEY)

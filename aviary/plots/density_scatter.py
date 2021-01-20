@@ -4,7 +4,7 @@ import numpy as np
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from scipy.interpolate import interpn
 
-from roost.plots.utils import add_identity, with_hist
+from aviary.plots.utils import add_identity, with_hist
 
 
 def density_scatter(

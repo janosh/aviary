@@ -1,7 +1,7 @@
 import pytest
 
-from roost.cgcnn import CrystalGraphConvNet, CrystalGraphData, collate_batch
-from roost.utils import (
+from aviary.cgcnn import CrystalGraphConvNet, CrystalGraphData, collate_batch
+from aviary.utils import (
     classification_test,
     make_model_dir,
     regression_test,

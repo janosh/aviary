@@ -1,7 +1,7 @@
 from torch import nn
 
-from roost.base import BaseModel
-from roost.segments import SimpleNet
+from aviary.base import BaseModel
+from aviary.segments import SimpleNet
 
 from . import DescriptorNetwork
 

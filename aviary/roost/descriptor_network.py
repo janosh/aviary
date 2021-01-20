@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from roost.segments import AttentionPooling, SimpleNet
+from aviary.segments import AttentionPooling, SimpleNet
 
 from .message_layer import MessageLayer
 

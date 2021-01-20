@@ -8,7 +8,7 @@ from torch import nn
 from torch.nn.functional import softmax
 from tqdm import tqdm
 
-from roost.utils import interruptable, pearsonr
+from aviary.utils import interruptable, pearsonr
 
 from .core import sampled_softmax, save_checkpoint
 
@@ -243,7 +243,7 @@ class BaseModel(nn.Module, ABC):
 
     @torch.no_grad()
     def featurize(self, generator):
-        """Generate features for a list of composition strings. When using Roost,
+        """Generate features for a list of composition strings. When using Roost or Wren,
         this runs only the message-passing part of the model without the ResidualNet.
 
         Args:

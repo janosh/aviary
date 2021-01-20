@@ -8,7 +8,7 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
-from roost.core import LoadFeaturizer
+from aviary.core import LoadFeaturizer
 
 
 class WyckoffData(Dataset):

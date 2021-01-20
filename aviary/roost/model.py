@@ -1,8 +1,8 @@
 import torch
 from tqdm import trange
 
-from roost.base import BaseModel
-from roost.segments import ResidualNet
+from aviary.base import BaseModel
+from aviary.segments import ResidualNet
 
 from . import DescriptorNetwork
 
