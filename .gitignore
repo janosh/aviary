@@ -5,7 +5,7 @@ dist
 __pycache__
 # slurm output log files on CSD3
 *.out
-**/wren
+
 # CGCNN cache files
 data/datasets/cache
 data/datasets/large
