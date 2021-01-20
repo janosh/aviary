@@ -14,6 +14,8 @@
 
 </h4>
 
+> Forked from [@CompRhys/roost](https://github.com/CompRhys/roost).
+
 **R**epresentati**o**n Learning fr**o**m **St**oichiometry
 
 ## Premise

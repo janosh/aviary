@@ -1,25 +1,18 @@
 from typing import List
 
 from torch import nn
-from torch_mnf.layers import MNFLinear
 
 
 class ResidualNet(nn.Module):
-    """
-    Feed forward Residual Neural Network
-    """
+    """ Feed forward Residual Neural Network """
 
-    def __init__(
-        self, dims: List[int], activation=nn.ReLU, batchnorm: bool = True, use_mnf=False
-    ):
+    def __init__(self, dims: List[int], activation=nn.ReLU, batchnorm: bool = True):
         super().__init__()
 
         output_dim = dims.pop()
 
-        fc = MNFLinear if use_mnf else nn.Linear
-
         self.fcs = nn.ModuleList(
-            [fc(dims[i], dims[i + 1]) for i in range(len(dims) - 1)]
+            [nn.Linear(dims[i], dims[i + 1]) for i in range(len(dims) - 1)]
         )
 
         bn_layers = [

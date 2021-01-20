@@ -207,7 +207,7 @@ class BaseModel(nn.Module, ABC):
         return metrics
 
     @torch.no_grad()
-    def predict(self, generator, verbose=False, repeat=1):
+    def predict(self, generator, verbose=False):
         """ Generate predictions """
 
         test_ids = []
@@ -226,7 +226,7 @@ class BaseModel(nn.Module, ABC):
             input_ = (t.to(self.device) for t in input_)
 
             # compute output
-            output = model(*input_, repeat=repeat)
+            output = model(*input_)
 
             # collect the model outputs
             test_ids += ids
