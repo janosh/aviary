@@ -7,7 +7,7 @@
 <h4 align="center">
 
 [![Tests](https://github.com/janosh/aviary/workflows/Tests/badge.svg)](https://github.com/janosh/aviary/actions)
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/janosh/aviary/master.svg)](https://results.pre-commit.ci/latest/github/janosh/aviary/master)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/janosh/aviary/main.svg)](https://results.pre-commit.ci/latest/github/janosh/aviary/main)
 [![License](https://img.shields.io/github/license/janosh/aviary?label=License)](/license)
 [![GitHub Repo Size](https://img.shields.io/github/repo-size/janosh/aviary?label=Repo+Size)](https://github.com/janosh/aviary/graphs/contributors)
 [![GitHub last commit](https://img.shields.io/github/last-commit/janosh/aviary?label=Last+Commit)](https://github.com/janosh/aviary/commits)

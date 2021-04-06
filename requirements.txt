@@ -9,6 +9,7 @@ pandas
 scikit_learn
 tensorboard
 pyyaml
+ml_matrics
 
 # dev dependencies
 pytest
