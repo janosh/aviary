@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 
 from examples.common_cli_args import add_common_args
 
+
 common_args = [
     "val_path",
     "val_size",
@@ -33,7 +34,7 @@ common_args = [
 
 def test_common_cli_args():
     parser = ArgumentParser()
-    parser.add_argument("--model-name", type=str, default="tests")
+    parser.add_argument("--model-name", default="tests")
     args = add_common_args(parser)
     for arg in common_args:
         assert hasattr(args, arg)

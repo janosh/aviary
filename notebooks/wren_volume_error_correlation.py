@@ -4,17 +4,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.stats import zscore
-from sklearn.metrics import r2_score
-
-from aviary.base import ROOT
-from aviary.plots import (
+from ml_matrics import (
     count_elements,
     cum_err_cum_res,
     density_scatter_hex_with_hist,
     density_scatter_with_hist,
     ptable_elemental_prevalence,
 )
+from scipy.stats import zscore
+from sklearn.metrics import r2_score
+
+from aviary.utils import ROOT
+
 
 plt.rcParams["figure.figsize"] = [12, 8]
 plt.rcParams["figure.dpi"] = 300
@@ -24,7 +25,7 @@ log_color_scale = mpl.colors.LogNorm()
 
 
 # %%
-df_path = lambda idx: f"{ROOT}/models/mp-subset/ens_{idx}/test_results.csv"
+df_path = lambda idx: f"{ROOT}/models/mp_subset/ens_{idx}/test_results.csv"
 
 # disable na_filter so the composition NaN is not converted to nan
 dfs = [pd.read_csv(df_path(idx), na_filter=False) for idx in range(20)]
@@ -58,9 +59,9 @@ for key in [
 
 
 # %%
-# total.to_csv(f"{ROOT}/models/mp-subset/combined_test_results.csv", float_format="%g")
+# total.to_csv(f"{ROOT}/models/mp_subset/combined_test_results.csv", float_format="%g")
 total = pd.read_csv(
-    f"{ROOT}/models/mp-subset/combined_test_results.csv", index_col="id"
+    f"{ROOT}/models/mp_subset/combined_test_results.csv", index_col="id"
 )
 
 
@@ -87,7 +88,7 @@ for df, cell in zip(dfs, outer_grid):
         text=f"R2 = {r2:.4f}\nMAE = {mae:.4f}\nRMSE = {rmse:.4f}",
     )
 
-plt.savefig(f"{ROOT}/models/mp-subset/density-scatter.png")
+plt.savefig(f"{ROOT}/models/mp_subset/density-scatter.png")
 
 
 # %%
@@ -99,7 +100,7 @@ total.sort_values("volume").plot.scatter(
     norm=log_color_scale,
     title="sort volume asc",
 )
-plt.savefig(f"{ROOT}/models/mp-subset/target-vs-ae-sort-volume-asc.png")
+plt.savefig(f"{ROOT}/models/mp_subset/target-vs-ae-sort-volume-asc.png")
 
 
 # %%
@@ -109,7 +110,7 @@ plt.plot(
     np.arange(0.05, 0.15, 0.01),
     [(uniq.ae > thr).mean() for thr in np.arange(0.05, 0.15, 0.01)],
 )
-plt.savefig(f"{ROOT}/models/mp-subset/uniq-ae-threshhold.png")
+plt.savefig(f"{ROOT}/models/mp_subset/uniq-ae-threshhold.png")
 
 
 # %%
@@ -126,7 +127,7 @@ total.sort_values("volume").plot.scatter(
     cmap="Blues",
     norm=log_color_scale,
 )
-plt.savefig(f"{ROOT}/models/mp-subset/target-vs-pred_total_color-by-volume.png")
+plt.savefig(f"{ROOT}/models/mp_subset/target-vs-pred_total_color-by-volume.png")
 
 
 # %%
@@ -137,7 +138,7 @@ mean_per_id.sort_values("volume").plot.scatter(
     cmap="Blues",
     norm=log_color_scale,
 )
-plt.savefig(f"{ROOT}/models/mp-subset/target-vs-pred_mean-per-id_color-by-volume.png")
+plt.savefig(f"{ROOT}/models/mp_subset/target-vs-pred_mean-per-id_color-by-volume.png")
 
 
 # %%
@@ -147,7 +148,7 @@ low_err = mean_per_id.sort_values("ae").head(len(mean_per_id) * 4 // 5)
 
 # %%
 ptable_elemental_prevalence(high_err.composition.values, log_scale=True)
-plt.savefig(f"{ROOT}/models/mp-subset/ptable_count_by_err.png")
+plt.savefig(f"{ROOT}/models/mp_subset/ptable_count_by_err.png")
 
 
 # %%
@@ -159,7 +160,7 @@ low_err_counts = count_elements(low_err.composition.values)
 low_err_counts[low_err_counts == 0] = 1
 relative_counts = high_err_counts / low_err_counts
 ptable_elemental_prevalence(elem_counts=relative_counts)
-plt.savefig(f"{ROOT}/models/mp-subset/relative_ptable_count_by_err.png")
+plt.savefig(f"{ROOT}/models/mp_subset/relative_ptable_count_by_err.png")
 
 
 # %%
@@ -182,13 +183,13 @@ density_scatter_hex_with_hist(
     color_by=total.volume,
 )
 
-plt.savefig(f"{ROOT}/models/mp-subset/hex-pred-vs-target-color-by-volume-log-mean.png")
+plt.savefig(f"{ROOT}/models/mp_subset/hex-pred-vs-target-color-by-volume-log-mean.png")
 
 
 # %%
 cum_err_cum_res(targets, preds, [title])
 
-plt.savefig(f"{ROOT}/models/mp-subset/cum_err_cum_res.png")
+plt.savefig(f"{ROOT}/models/mp_subset/cum_err_cum_res.png")
 
 
 # %%
@@ -204,7 +205,7 @@ sns.violinplot(
     scale="count",
     cut=0,
 )
-plt.savefig(f"{ROOT}/models/mp-subset/violin-ae-vs-spacegroup.png")
+plt.savefig(f"{ROOT}/models/mp_subset/violin-ae-vs-spacegroup.png")
 
 
 # %%
@@ -220,4 +221,4 @@ top_mae_spacegroups = pd.DataFrame(
 top_mae_spacegroups["count"] = pd.DataFrame(total.value_counts("spacegroup"))
 
 top_mae_spacegroups.plot(kind="bar", y=["mae", "count"], secondary_y="count")
-plt.savefig(f"{ROOT}/models/mp-subset/bar-mae+count-vs-spacegroup.pdf")
+plt.savefig(f"{ROOT}/models/mp_subset/bar-mae+count-vs-spacegroup.pdf")

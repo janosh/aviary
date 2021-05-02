@@ -4,17 +4,19 @@ import os
 import pickle
 
 import matplotlib.pyplot as plt
-from pymatgen import MPRester
 from pymatgen.electronic_structure.bandstructure import BandStructureSymmLine
 from pymatgen.electronic_structure.plotter import BSPlotter
+from pymatgen.ext.matproj import MPRester
 
 from aviary.utils import API_KEY, ROOT, fetch_mp
+
 
 # %%
 DIR = f"{ROOT}/data/datasets/bandstructs"
 files = os.listdir(f"{DIR}/zip")
 
 mp_ids = [f.split(":")[0] for f in files]
+
 
 # %%
 mpr = MPRester(API_KEY)
@@ -47,6 +49,7 @@ spacegroups = fetch_mp(
 spacegroups["bravais"] = spacegroups.apply(
     lambda row: row.crystal_system + row.symbol[0], axis=1
 )
+
 
 # %%
 spacegroups.value_counts("crystal_system")
@@ -88,7 +91,6 @@ for idx, (id, row) in enumerate(df.iterrows(), 1):
     ax.set_xlabel("$k_x$")
     ax.set_ylabel("$k_y$")
     ax.set_zlabel("$k_z$")
-    BSPlotter(BandStructureSymmLine.from_dict(bs_dict)).plot_brillouin(ax=ax)
 
 fig.tight_layout(h_pad=5)
 

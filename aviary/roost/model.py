@@ -62,7 +62,7 @@ class Roost(BaseModel):
         self.output_nn = ResidualNet(dims=[elem_fea_len, *out_hidden, output_dim])
 
     def forward(self, elem_weights, elem_fea, self_fea_idx, nbr_fea_idx, cry_elem_idx):
-        """ Forward pass through the material_nn and output_nn """
+        """Forward pass through the material_nn and output_nn"""
 
         crys_fea = self.material_nn(
             elem_weights, elem_fea, self_fea_idx, nbr_fea_idx, cry_elem_idx

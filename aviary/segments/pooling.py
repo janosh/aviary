@@ -4,7 +4,7 @@ from torch_scatter import scatter_add, scatter_max
 
 
 class AttentionPooling(nn.Module):
-    """ Softmax attention layer """
+    """Softmax attention layer"""
 
     def __init__(self, gate_nn, message_nn):
         super().__init__()

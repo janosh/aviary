@@ -22,13 +22,13 @@ def train_single(
 ):
     """Train a single model"""
 
-    train_generator = DataLoader(train_set, **data_params)
+    train_loader = DataLoader(train_set, **data_params)
 
     if val_set is not None:
         data_params.update({"batch_size": 16 * data_params["batch_size"]})
-        val_generator = DataLoader(val_set, **data_params)
+        val_loader = DataLoader(val_set, **data_params)
     else:
-        val_generator = None
+        val_loader = None
 
     model, criterion, optimizer, scheduler, normalizer = init_model(
         model_class, model_dir, model_params, swa=swa, **setup_params
@@ -52,7 +52,7 @@ def train_single(
         # get validation baseline
         with torch.no_grad():
             val_metrics = model.evaluate(
-                val_generator,
+                val_loader,
                 criterion,
                 optimizer=None,
                 normalizer=normalizer,
@@ -64,8 +64,8 @@ def train_single(
         model.best_val_score = val_score
 
     model.fit(
-        train_generator,
-        val_generator,
+        train_loader,
+        val_loader,
         optimizer,
         scheduler,
         epochs,

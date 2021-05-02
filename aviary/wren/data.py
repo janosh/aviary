@@ -41,7 +41,7 @@ class WyckoffData(Dataset):
         self.elem_emb_len = self.atom_features.embedding_size
         self.sym_fea_dim = self.sym_features.embedding_size
         self.task = task
-        self.n_targets = np.max(self.df[self.df.columns[2]].values) + 1
+        self.n_targets = self.df.iloc[:, 2].max() + 1 if task == "classification" else 1
 
     def __len__(self):
         return len(self.df)
@@ -220,7 +220,7 @@ def collate_batch(dataset_list):
 
 
 def parse_wren(swyk_list, relab_dict):
-    """"""
+    """ """
     swyk_list = ast.literal_eval(swyk_list)
 
     mult_list = []

@@ -1,62 +1,73 @@
 import json
+from typing import Iterable
 
 import numpy as np
 import torch
+from torch import Tensor
 from torch.nn.functional import softmax
 
 
 class Normalizer:
-    """Normalize a Tensor and restore it later."""
+    """Normalize a tensor and restore it later."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.mean = None
         self.std = None
 
-    def fit(self, tensor, dim=0, keepdim=False):
-        """tensor is taken as a sample to calculate the mean and std"""
-        self.mean = tensor.mean(dim, keepdim)
-        self.std = tensor.std(dim, keepdim)
+    def fit(self, tensor: Tensor, dim: int = 0) -> None:
+        self.mean = tensor.mean(dim)
+        self.std = tensor.std(dim)
+        assert (self.std != 0).all(), "self.std has 0 entries, cannot divide by 0"
 
-    def norm(self, tensor):
-        assert [self.mean, self.std] != [None, None], "Normalizer must be fit first"
+    def norm(self, tensor: Tensor) -> Tensor:
+        assert self.is_fit, "Normalizer must be fit first"
         return (tensor - self.mean) / self.std
 
-    def denorm(self, normed_tensor):
-        assert [self.mean, self.std] != [None, None], "Normalizer must be fit first"
+    def denorm(self, normed_tensor: Tensor) -> Tensor:
+        assert self.is_fit, "Normalizer must be fit first"
         return normed_tensor * self.std + self.mean
 
-    def state_dict(self):
+    def state_dict(self) -> dict:
         return {"mean": self.mean, "std": self.std}
 
-    def load_state_dict(self, state_dict):
+    def load_state_dict(self, state_dict: dict) -> None:
         self.mean = state_dict["mean"].cpu()
         self.std = state_dict["std"].cpu()
 
+    @property
+    def is_fit(self) -> bool:
+        return [self.mean, self.std] != [None, None]
+
 
 class Featurizer:
-    """Base class for featurizing nodes and edges."""
+    """Base class for featurizing nodes and edges in a crystal graph."""
 
-    def __init__(self, allowed_types):
+    def __init__(self, allowed_types: Iterable[str]) -> None:
+        """
+        Args:
+            allowed_types (Iterable[str]): names of element names for which
+            to store embeddings
+        """
         self.allowed_types = set(allowed_types)
         self._embedding = {}
 
-    def get_fea(self, key):
+    def get_fea(self, key: str) -> np.ndarray:
         assert key in self.allowed_types, f"{key} is not an allowed atom type"
         return self._embedding[key]
 
-    def load_state_dict(self, state_dict):
+    def load_state_dict(self, state_dict: dict) -> None:
         self._embedding = state_dict
         self.allowed_types = set(self._embedding.keys())
 
-    def get_state_dict(self):
+    def get_state_dict(self) -> dict:
         return self._embedding
 
     @property
-    def embedding_size(self):
-        return len(self._embedding[list(self._embedding.keys())[0]])
+    def embedding_size(self) -> int:
+        return len(list(self._embedding.values())[0])
 
     @classmethod
-    def from_json(cls, embedding_file):
+    def from_json(cls, embedding_file: str) -> "Featurizer":
         with open(embedding_file) as file:
             embedding = json.load(file)
         allowed_types = set(embedding.keys())

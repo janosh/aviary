@@ -10,3 +10,6 @@ __pycache__
 data/datasets/cache
 data/datasets/large
 data/datasets/bandstructs
+
+runs
+results

@@ -169,7 +169,7 @@ def main(
     if evaluate:
 
         data_params["batch_size"] = 64 * batch_size  # faster model inference
-        data_params["shuffle"] = False  # need fixed data order due to ensembling
+        data_params["shuffle"] = False  # need fixed data order for ensembling
 
         run_test(
             task,
@@ -193,49 +193,39 @@ def input_parser():
     # data inputs
     parser.add_argument(
         "--data-path",
-        type=str,
         default="data/datasets/wren/taata-wyk-Zn-Ti-N.csv",
-        metavar="PATH",
         help="Path to main data set/training set",
     )
     parser.add_argument(
         "--sym-path",
-        type=str,
         default="data/wren/alg-off.json",
-        # default="data/wren/alg.json",
-        metavar="PATH",
         help="Element embedding feature path",
     )
 
     # data embeddings
     parser.add_argument(
         "--fea-path",
-        type=str,
         default="data/embeddings/matscholar-embedding.json",
-        metavar="PATH",
         help="Element embedding feature path",
     )
 
     # graph inputs
     parser.add_argument(
         "--n-graph",
-        default=3,
         type=int,
-        metavar="INT",
+        default=3,
         help="Number of message passing layers (default: 3)",
     )
     parser.add_argument(
         "--elem-fea-len",
-        default=32,
         type=int,
-        metavar="INT",
+        default=32,
         help="Number of hidden features for elements (default: 64)",
     )
     parser.add_argument(
         "--sym-fea-len",
-        default=32,
         type=int,
-        metavar="INT",
+        default=32,
         help="Number of hidden features for elements (default: 64)",
     )
 

@@ -6,7 +6,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 import torch
-from pymatgen import Structure
+from pymatgen.core import Structure
 from torch.utils.data import Dataset
 
 from aviary.core import Featurizer
@@ -64,11 +64,7 @@ class CrystalGraphData(Dataset):
         self.nbr_fea_len = self.gdf.embedding_size
 
         self.task = task
-        self.n_targets = (
-            np.max(self.df[self.df.columns[2]].values) + 1
-            if task == "classification"
-            else 1
-        )
+        self.n_targets = max(self.df.iloc[:, 2]) + 1 if task == "classification" else 1
 
     def __len__(self):
         return len(self.df)

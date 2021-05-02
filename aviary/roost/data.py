@@ -4,7 +4,7 @@ from os.path import exists
 import numpy as np
 import pandas as pd
 import torch
-from pymatgen import Composition
+from pymatgen.core import Composition
 from torch.utils.data import Dataset
 
 from aviary.core import Featurizer

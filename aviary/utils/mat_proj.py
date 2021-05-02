@@ -1,9 +1,10 @@
 from ast import literal_eval
 
 import pandas as pd
-from pymatgen import MPRester
+from pymatgen.ext.matproj import MPRester
 
 from aviary.utils.io import ROOT
+
 
 # Materials Project API keys available at https://materialsproject.org/dashboard.
 API_KEY = "X2UaF2zkPMcFhpnMN"

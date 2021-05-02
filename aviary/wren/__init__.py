@@ -4,6 +4,7 @@ from .data import WyckoffData, collate_batch
 from .descriptor_network import DescriptorNetwork
 from .model import Wren
 
+
 ROOT = dirname(dirname(abspath(__file__)))
 
 

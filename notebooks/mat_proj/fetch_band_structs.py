@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from aviary.utils import API_KEY, ROOT, fetch_mp
 
+
 # %%
 mpr = MPRester(API_KEY)
 mp_version = mpr.get_database_version()
@@ -22,6 +23,7 @@ os.makedirs(DIR, exist_ok=True)
 
 # %% [markdown]
 # # Fetch all binary material IDs
+
 
 # %%
 # fetch all binary MP materials (only on first run, data is stored and loaded below)
@@ -70,6 +72,7 @@ spacegroups = pd.read_csv(
 # count materials by crystal_system
 mp_ids = spacegroups
 spacegroups.value_counts("spacegroup_number")
+
 
 # %% [markdown]
 # # Testing

@@ -4,6 +4,7 @@ brand structure. Inspired by Yunwei Zhang's idea to use the std of around 5 band
 closest to the Fermi level to classify a material as superconductor.
 """
 
+
 # %%
 import gzip
 import os
@@ -14,6 +15,7 @@ import pandas as pd
 from tqdm.std import tqdm
 
 from aviary.utils import ROOT
+
 
 # %%
 DIR = f"{ROOT}/data/datasets/bandstructs"

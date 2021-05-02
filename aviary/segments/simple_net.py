@@ -4,7 +4,7 @@ from torch import nn
 
 
 class SimpleNet(nn.Module):
-    """ Simple Feed Forward Neural Network """
+    """Simple Feed Forward Neural Network"""
 
     def __init__(
         self, dims: List[int], activation=nn.LeakyReLU, batchnorm: bool = False

@@ -4,7 +4,7 @@ from torch import nn
 
 
 class ResidualNet(nn.Module):
-    """ Feed forward Residual Neural Network """
+    """Feed forward Residual Neural Network"""
 
     def __init__(self, dims: List[int], activation=nn.ReLU, batchnorm: bool = True):
         super().__init__()

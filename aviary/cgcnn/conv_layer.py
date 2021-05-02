@@ -5,7 +5,7 @@ from torch_scatter import scatter_add
 
 
 class ConvLayer(nn.Module):
-    """ Convolutional operation on graphs """
+    """Convolutional operation on graphs"""
 
     def __init__(self, elem_fea_len, nbr_fea_len):
         """

@@ -1,6 +1,7 @@
 import os
 from os.path import abspath, dirname
 
+
 # absolute path to the project's root directory
 ROOT = dirname(dirname(dirname(abspath(__file__))))
 

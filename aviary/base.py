@@ -14,7 +14,7 @@ from .core import sampled_softmax, save_checkpoint
 
 
 class BaseModel(nn.Module, ABC):
-    """ A base class for regression and classification models. """
+    """A base class for regression and classification models."""
 
     def __init__(
         self, task, n_targets, robust, device=None, epoch=1, best_val_score=None
@@ -58,8 +58,8 @@ class BaseModel(nn.Module, ABC):
             )
 
             if verbose:
-                metric_str = "\t ".join(
-                    f"{key} {val:.3f}" for key, val in train_metrics.items()
+                metric_str = " ".join(
+                    f"{key} {val:<7.3f}" for key, val in train_metrics.items()
                 )
                 print(f"Train      : {metric_str}")
 
@@ -74,8 +74,8 @@ class BaseModel(nn.Module, ABC):
                     )
 
                 if verbose:
-                    metric_str = "\t ".join(
-                        f"{key} {val:.3f}" for key, val in val_metrics.items()
+                    metric_str = " ".join(
+                        f"{key} {val:<7.3f}" for key, val in val_metrics.items()
                     )
                     print(f"Validation : {metric_str}")
 
@@ -139,7 +139,7 @@ class BaseModel(nn.Module, ABC):
     def evaluate(
         self, loader, criterion, optimizer, normalizer, action="train", verbose=False
     ):
-        """ Evaluate the model for one epoch """
+        """Evaluate the model for one epoch"""
 
         assert action in ["train", "val"], f"action must be train or val, got {action}"
         self.train() if action == "train" else self.eval()
@@ -208,7 +208,7 @@ class BaseModel(nn.Module, ABC):
 
     @torch.no_grad()
     def predict(self, generator, verbose=False):
-        """ Generate predictions """
+        """Generate predictions"""
 
         test_ids = []
         test_comp = []
@@ -268,7 +268,7 @@ class BaseModel(nn.Module, ABC):
         return np.vstack(features)
 
     @abstractmethod
-    def forward(self, *x):
+    def forward(self, *inputs):
         """
         Forward pass through the model. Needs to be implemented in any derived
         model class.

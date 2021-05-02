@@ -47,7 +47,6 @@ def add_test_val_args(parser):
     valid_group = parser.add_mutually_exclusive_group()
     valid_group.add_argument(
         "--val-path",
-        type=str,
         metavar="PATH",
         help="Path to independent validation set",
     )
@@ -60,7 +59,7 @@ def add_test_val_args(parser):
     )
     test_group = parser.add_mutually_exclusive_group()
     test_group.add_argument(
-        "--test-path", type=str, metavar="PATH", help="Path to independent test set"
+        "--test-path", metavar="PATH", help="Path to independent test set"
     )
     test_group.add_argument(
         "--test-size",
@@ -114,7 +113,6 @@ def add_optimizer_args(parser):
     parser.add_argument(
         "--loss",
         default="L1",
-        type=str,
         metavar="STR",
         help="Loss function if regression (default: 'L1')",
     )
@@ -126,7 +124,6 @@ def add_optimizer_args(parser):
     parser.add_argument(
         "--optim",
         default="AdamW",
-        type=str,
         metavar="STR",
         help="Optimizer used for training (default: 'AdamW')",
     )
@@ -165,7 +162,6 @@ def add_ensemble_args(parser):
     parser.add_argument(
         "--run-id",
         default="run_1",
-        type=str,
         metavar="STR",
         help="Index for model in an ensemble of models",
     )
@@ -174,11 +170,10 @@ def add_ensemble_args(parser):
 def add_restart_args(parser):
     use_group = parser.add_mutually_exclusive_group()
     use_group.add_argument(
-        "--fine-tune", type=str, metavar="PATH", help="Checkpoint path for fine tuning"
+        "--fine-tune", metavar="PATH", help="Checkpoint path for fine tuning"
     )
     use_group.add_argument(
         "--transfer",
-        type=str,
         metavar="PATH",
         help="Checkpoint path for transfer learning",
     )
@@ -186,11 +181,7 @@ def add_restart_args(parser):
 
 def add_task_args(parser):
     parser.add_argument(
-        "--task",
-        default="regression",
-        type=str,
-        metavar="STR",
-        help="Regression or classification",
+        "-t", "--task", choices=("regression", "classification"), default="regression"
     )
     parser.add_argument(
         "--evaluate",

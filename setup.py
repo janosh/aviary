@@ -1,5 +1,6 @@
 from setuptools import find_namespace_packages, setup
 
+
 setup(
     name="aviary",
     version="0.0.1",
